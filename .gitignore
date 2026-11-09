@@ -1,0 +1,47 @@
+# Python bytecode & build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Local model & compiler caches (never commit multi-GB weights or XLA caches)
+.cache/
+xla_cache/
+vllm_xla_cache/
+jax_cache/
+inductor_cache/
+models_cache/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# OS / Editor files
+.DS_Store
+*.swp
+*~
+
+# Keep tracked artifact directories & real TPU v7 outputs!
+!artifacts/logs/.gitkeep
+!artifacts/traces/.gitkeep
+!artifacts/plots/.gitkeep
+!artifacts/logs/*.json
+!artifacts/logs/*.csv
+!artifacts/plots/*.png
+!artifacts/plots/*.pdf
+!artifacts/traces/*.xplane.pb
+!artifacts/traces/*.xplane.pb.gz
+!artifacts/traces/**/*.xplane.pb
+!artifacts/traces/**/*.xplane.pb.gz

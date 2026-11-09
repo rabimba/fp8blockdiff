@@ -1,0 +1,70 @@
+{
+  "project": "FP8 Block-Diffusion Speculative Decoding on Systolic Arrays",
+  "target_hardware": "Cloud TPU v7 (Ironwood / tpu7x, ~192 GB HBM3E/chip, 4614 TFLOPS FP8, 7.38 TB/s HBM3E)",
+  "overall_state": "AWAITING_TPU_V7_EXECUTION",
+  "contract_guarantees": {
+    "zero_mocks_or_placeholders": true,
+    "cpu_for_tpu_substitution_forbidden": true,
+    "inspect_before_coding_enforced": true,
+    "tpu_lock_hygiene_enforced": true,
+    "persistent_xla_cache_enforced": true
+  },
+  "stage_a_scaffold_host": {
+    "completed": true,
+    "verified_host_math_and_xprof_wire_parser": true,
+    "notes": "Repository scaffolded and host-math/wire-parser verified on non-TPU workstation. Zero TPU metrics fabricated. Ready for Stage B takeover on Cloud TPU v7 VM."
+  },
+  "phases": {
+    "phase0_discovery": {
+      "status": "pending_tpu_v7",
+      "gate_command": "bash -c 'source scripts/env_common.sh && cleanup_stale_tpu_processes && python3 scripts/phase0_discover.py'",
+      "required_outputs": [
+        "docs/api_discovery.md",
+        "artifacts/logs/phase0_probe.json"
+      ],
+      "completed_at": null
+    },
+    "phase1_baseline_serving": {
+      "status": "pending_tpu_v7",
+      "gate_command": "bash -c 'source scripts/env_common.sh && cleanup_stale_tpu_processes && python3 scripts/download_and_verify_models.py && pytest -v -s tests/test_baseline_serving.py'",
+      "required_outputs": [
+        "artifacts/logs/model_manifest.json",
+        "artifacts/logs/phase1_baseline_smoke.json"
+      ],
+      "completed_at": null
+    },
+    "phase2_pallas_block_verify": {
+      "status": "pending_tpu_v7",
+      "gate_command": "bash -c 'source scripts/env_common.sh && cleanup_stale_tpu_processes && pytest -v -s tests/test_pallas_block_verify.py'",
+      "required_outputs": [
+        "artifacts/logs/phase2_pallas_verify.json"
+      ],
+      "completed_at": null
+    },
+    "phase3_spec_matrix_and_xprof": {
+      "status": "pending_tpu_v7",
+      "gate_command": "bash -c 'source scripts/env_common.sh && cleanup_stale_tpu_processes && python3 benchmarks/run_spec_matrix.py --smoke && python3 benchmarks/run_spec_matrix.py --full && python3 scripts/parse_xprof.py'",
+      "required_outputs": [
+        "artifacts/logs/spec_matrix_runs.json",
+        "artifacts/logs/quality_equivalence.json",
+        "artifacts/logs/xprof_summary.json",
+        "artifacts/logs/spec_matrix_summary.csv"
+      ],
+      "completed_at": null
+    },
+    "phase4_roofline_and_submission": {
+      "status": "pending_tpu_v7",
+      "gate_command": "bash -c 'source scripts/env_common.sh && python3 benchmarks/fit_roofline_model.py && python3 scripts/generate_final_reports.py && bash scripts/run_all.sh'",
+      "required_outputs": [
+        "artifacts/logs/roofline_fit.json",
+        "artifacts/plots/roofline_trajectory.png",
+        "artifacts/plots/speedup_heatmap_BxK.png",
+        "artifacts/plots/acceptance_length_vs_entropy.png",
+        "artifacts/plots/xprof_time_breakdown.png",
+        "docs/paper_results_summary.md",
+        "README.md"
+      ],
+      "completed_at": null
+    }
+  }
+}

@@ -1,0 +1,88 @@
+# Phase 3 & Phase 4 Speculative Decoding Sweep & Roofline Configuration
+hardware_tpu_v7:
+  architecture: "Cloud TPU v7 (Ironwood / tpu7x)"
+  peak_tflops_fp8_per_chip: 4614.0
+  peak_tflops_bf16_per_chip: 2307.0
+  hbm3e_bandwidth_tbps_per_chip: 7.38
+  hbm3e_capacity_gb_per_chip: 192.0
+  fp8_ridge_point_flops_per_byte: 625.203252
+  bf16_ridge_point_flops_per_byte: 312.601626
+  systolic_tile_multiple: 128
+  vmem_sublane_multiple: 8
+
+smoke_gate:
+  batch_sizes: [1, 4]
+  warmup_prompts_per_suite: 2
+  eval_prompts_per_suite: 4
+  max_new_tokens: 64
+  temperature: 0.0
+  modes:
+    - "autoreg_fp8"
+    - "dflash_fp8_k16"
+    - "dflash_pallas_adaptive_fp8"
+
+full_sweep:
+  batch_sizes: [1, 4, 8, 16, 32]
+  bf16_contrast_batch_sizes: [1, 8, 32]
+  xprof_capture_batch_sizes: [1, 8, 32]
+  xprof_duration_ms: 3500
+  warmup_prompts_per_suite: 8
+  eval_prompts_per_suite: 50
+  max_new_tokens: 256
+  temperature: 0.0
+
+  datasets:
+    code_synthesis:
+      hf_repo: "openai/openai_humaneval"
+      hf_split: "test"
+      backup_hf_repo: "google-research-datasets/mbpp"
+      backup_hf_config: "sanitized"
+      backup_hf_split: "test"
+    math_reasoning:
+      hf_repo: "openai/gsm8k"
+      hf_config: "main"
+      hf_split: "test"
+    dialogue_summarization:
+      hf_repo: "HuggingFaceH4/ultrachat_200k"
+      hf_split: "test_sft"
+      min_prompt_chars: 600
+      max_prompt_chars: 6000
+
+  modes:
+    - id: "autoreg_fp8"
+      label: "Standard Autoregressive (FP8)"
+      precision: "fp8"
+      spec_type: "none"
+    - id: "autoreg_bf16"
+      label: "Standard Autoregressive (BF16 Roofline Contrast)"
+      precision: "bf16"
+      spec_type: "none"
+      batch_subset_only: true
+    - id: "eagle3_fp8"
+      label: "Tree-Based EAGLE-3 Speculative (FP8)"
+      precision: "fp8"
+      spec_type: "eagle3"
+      num_speculative_tokens: 5
+    - id: "dflash_fp8_k8"
+      label: "DFlash Block-Diffusion K=8 (FP8)"
+      precision: "fp8"
+      spec_type: "dflash"
+      block_size_k: 8
+    - id: "dflash_fp8_k16"
+      label: "DFlash Block-Diffusion K=16 (FP8)"
+      precision: "fp8"
+      spec_type: "dflash"
+      block_size_k: 16
+    - id: "dflash_fp8_k32"
+      label: "DFlash Block-Diffusion K=32 (FP8)"
+      precision: "fp8"
+      spec_type: "dflash"
+      block_size_k: 32
+    - id: "dflash_pallas_adaptive_fp8"
+      label: "DFlash/DSpark + Entropy-Adaptive Static-Tile Pallas Verify (FP8)"
+      precision: "fp8"
+      spec_type: "dflash_pallas_adaptive"
+      padded_block_capacity_k: 32
+      min_block_k: 4
+      entropy_threshold_nats: 1.65
+      survival_threshold: 0.20

@@ -1,0 +1,57 @@
+# Declarative target & speculative drafter model registry for Cloud TPU v7 (Ironwood)
+active_profile: qwen3_8b
+
+profiles:
+  qwen3_8b:
+    description: "Dense 8.2B Qwen3 FP8 target + DFlash block-diffusion + EAGLE-3 speculators (ungated Apache-2.0)"
+    target_fp8: "Qwen/Qwen3-8B-FP8"
+    target_bf16: "Qwen/Qwen3-8B"
+    expected_vocab_size: 151936
+    active_params_billions: 8.19
+    total_params_billions: 8.19
+    weight_bytes_fp8: 8190000000
+    weight_bytes_bf16: 16380000000
+    num_layers: 36
+    num_kv_heads: 8
+    head_dim: 128
+    dflash_candidates:
+      - "z-lab/Qwen3-8B-DFlash-b16"
+    eagle3_candidates:
+      - "RedHatAI/Qwen3-8B-speculator.eagle3"
+      - "AngelSlim/Qwen3-8B_eagle3"
+      - "Tengyunw/qwen3_8b_eagle3"
+    fallback_spec_method: "ngram"
+    ngram_prompt_lookup_max: 5
+    ngram_num_speculative_tokens: 5
+
+  qwen3_30b_a3b:
+    description: "Optional MoE 30.5B-A3.3B Qwen3-Coder FP8 profile for multi-chip TPU v7 slices"
+    target_fp8: "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8"
+    target_bf16: "Qwen/Qwen3-Coder-30B-A3B-Instruct"
+    expected_vocab_size: 151936
+    active_params_billions: 3.30
+    total_params_billions: 30.50
+    weight_bytes_fp8: 30500000000
+    weight_bytes_bf16: 61000000000
+    num_layers: 48
+    num_kv_heads: 4
+    head_dim: 128
+    dflash_candidates:
+      - "z-lab/Qwen3-Coder-30B-A3B-DFlash"
+    eagle3_candidates:
+      - "RedHatAI/Qwen3-30B-A3B-speculator.eagle3"
+    fallback_spec_method: "ngram"
+    ngram_prompt_lookup_max: 5
+    ngram_num_speculative_tokens: 5
+
+serving:
+  host: "127.0.0.1"
+  port: 8000
+  kv_cache_dtype: "fp8"
+  async_scheduling: true
+  max_model_len: 4096
+  max_num_seqs: 64
+  gpu_memory_utilization: 0.88
+  startup_timeout_sec: 900
+  health_poll_interval_sec: 3.0
+  disable_prefix_caching_in_benchmarks: true
