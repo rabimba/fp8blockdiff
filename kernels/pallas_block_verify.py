@@ -23,6 +23,11 @@ from typing import Any, Callable
 import numpy as np
 import torch
 
+try:
+    import jax
+except ImportError:
+    jax = None  # type: ignore[assignment]
+
 
 SYSTOLIC_ROW_TILE = 128
 VOCAB_VMEM_TILE = 1024  # Exact multiple of 128 lanes
@@ -215,111 +220,121 @@ def _select_vocab_tile_size(v_pad: int) -> int:
     return preferred
 
 
-@functools.lru_cache(maxsize=16)
-def _build_cached_jax_op(
-    m_pad: int,
-    v_pad: int,
-    valid_vocab_size: int,
-    b_pad: int,
-    k_pad: int,
-    world_size: int,
-) -> Callable[..., Any]:
-    """Build and cache a static-shape Pallas + jax_op callable per padded tile bucket."""
+_WORLD_JAX_OPS: dict[int, Callable[..., Any]] = {}
+
+
+def _get_or_create_jax_op(world_size: int) -> Callable[..., Any]:
+    """Build and cache a single static-shape Pallas + jax_op callable per world_size."""
+    existing = _WORLD_JAX_OPS.get(world_size)
+    if existing is not None:
+        return existing
+
     import jax
     import jax.numpy as jnp
     from jax.experimental import pallas as pl
     from jax.experimental.pallas import tpu as pltpu
-
-    vocab_tile = _select_vocab_tile_size(v_pad)
-    num_m_tiles = m_pad // SYSTOLIC_ROW_TILE
-    num_v_tiles = v_pad // vocab_tile
-
-    def _pallas_online_entropy_argmax_kernel(
-        logits_ref: Any,
-        valid_v_ref: Any,
-        out_entropy_ref: Any,
-        out_argmax_ref: Any,
-        m_scratch_ref: Any,
-        l_scratch_ref: Any,
-        s_scratch_ref: Any,
-        bval_scratch_ref: Any,
-        bidx_scratch_ref: Any,
-    ) -> None:
-        v_idx = pl.program_id(1)
-        v_start = v_idx * vocab_tile
-        valid_v = valid_v_ref[0, 0]
-
-        @pl.when(v_idx == 0)
-        def _init_accumulators() -> None:
-            m_scratch_ref[...] = jnp.full((SYSTOLIC_ROW_TILE, 128), -jnp.inf, dtype=jnp.float32)
-            l_scratch_ref[...] = jnp.zeros((SYSTOLIC_ROW_TILE, 128), dtype=jnp.float32)
-            s_scratch_ref[...] = jnp.zeros((SYSTOLIC_ROW_TILE, 128), dtype=jnp.float32)
-            bval_scratch_ref[...] = jnp.full((SYSTOLIC_ROW_TILE, 128), -jnp.inf, dtype=jnp.float32)
-            bidx_scratch_ref[...] = jnp.zeros((SYSTOLIC_ROW_TILE, 128), dtype=jnp.int32)
-
-        tile = logits_ref[...].astype(jnp.float32)
-        col_ids = v_start + jnp.arange(vocab_tile, dtype=jnp.int32)[None, :]
-        valid_cols = col_ids < valid_v
-        masked_tile = jnp.where(valid_cols, tile, -1e30)
-
-        m_curr_1d = jnp.max(masked_tile, axis=1, keepdims=True)
-        shifted = masked_tile - m_curr_1d
-        exp_curr = jnp.where(valid_cols, jnp.exp(shifted), 0.0)
-        l_curr_1d = jnp.sum(exp_curr, axis=1, keepdims=True)
-        s_curr_1d = jnp.sum(jnp.where(valid_cols, exp_curr * shifted, 0.0), axis=1, keepdims=True)
-
-        # Broadcast [128, 1] reductions across [128, 128] VMEM register tile
-        m_curr = jnp.broadcast_to(m_curr_1d, (SYSTOLIC_ROW_TILE, 128))
-        l_curr = jnp.broadcast_to(l_curr_1d, (SYSTOLIC_ROW_TILE, 128))
-        s_curr = jnp.broadcast_to(s_curr_1d, (SYSTOLIC_ROW_TILE, 128))
-
-        m_old = m_scratch_ref[...]
-        l_old = l_scratch_ref[...]
-        s_old = s_scratch_ref[...]
-
-        m_new = jnp.maximum(m_old, m_curr)
-        dm_old = jnp.where(jnp.isfinite(m_old) & jnp.isfinite(m_new), m_old - m_new, 0.0)
-        dm_curr = jnp.where(jnp.isfinite(m_curr) & jnp.isfinite(m_new), m_curr - m_new, 0.0)
-        alpha = jnp.where(jnp.isfinite(m_old), jnp.exp(dm_old), 0.0)
-        beta = jnp.where(l_curr > 0.0, jnp.exp(dm_curr), 0.0)
-
-        s_old_term = jnp.where(l_old > 0.0, alpha * s_old + alpha * l_old * dm_old, 0.0)
-        s_curr_term = jnp.where(
-            l_curr > 0.0, beta * s_curr + beta * l_curr * dm_curr, 0.0
-        )
-
-        l_new = alpha * l_old + beta * l_curr
-        s_new = s_old_term + s_curr_term
-
-        m_scratch_ref[...] = m_new
-        l_scratch_ref[...] = l_new
-        s_scratch_ref[...] = s_new
-
-        tile_bval_1d = jnp.max(masked_tile, axis=1, keepdims=True)
-        tile_bidx_1d = jnp.argmax(masked_tile, axis=1).reshape((SYSTOLIC_ROW_TILE, 1)).astype(
-            jnp.int32
-        ) + v_start
-        tile_bval = jnp.broadcast_to(tile_bval_1d, (SYSTOLIC_ROW_TILE, 128))
-        tile_bidx = jnp.broadcast_to(tile_bidx_1d, (SYSTOLIC_ROW_TILE, 128))
-
-        prev_bval = bval_scratch_ref[...]
-        prev_bidx = bidx_scratch_ref[...]
-        take_curr = tile_bval > prev_bval
-        bidx_scratch_ref[...] = jnp.where(take_curr, tile_bidx, prev_bidx)
-        bval_scratch_ref[...] = jnp.maximum(prev_bval, tile_bval)
-
-        @pl.when(v_idx == num_v_tiles - 1)
-        def _write_final_tile() -> None:
-            safe_l = jnp.maximum(l_scratch_ref[...], 1e-30)
-            out_entropy_ref[...] = jnp.log(safe_l) - (s_scratch_ref[...] / safe_l)
-            out_argmax_ref[...] = bidx_scratch_ref[...]
 
     def _jax_static_block_verify_fn(
         padded_logits_2d: jax.Array,
         draft_ids_2d: jax.Array,
         active_mask_2d: jax.Array,
         control_vec_2d: jax.Array,
+        valid_vocab_size: int,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+        m_pad, v_pad = padded_logits_2d.shape
+        b_pad, k_pad = draft_ids_2d.shape
+        vocab_tile = _select_vocab_tile_size(v_pad)
+        num_m_tiles = m_pad // SYSTOLIC_ROW_TILE
+        num_v_tiles = v_pad // vocab_tile
+
+        def _pallas_online_entropy_argmax_kernel(
+            logits_ref: Any,
+            valid_v_ref: Any,
+            out_entropy_ref: Any,
+            out_argmax_ref: Any,
+            m_scratch_ref: Any,
+            l_scratch_ref: Any,
+            s_scratch_ref: Any,
+            bval_scratch_ref: Any,
+            bidx_scratch_ref: Any,
+        ) -> None:
+            v_idx = pl.program_id(1)
+            v_start = v_idx * vocab_tile
+            valid_v = valid_v_ref[0, 0]
+
+            @pl.when(v_idx == 0)
+            def _init_accumulators() -> None:
+                m_scratch_ref[...] = jnp.full(
+                    (SYSTOLIC_ROW_TILE, 128), -jnp.inf, dtype=jnp.float32
+                )
+                l_scratch_ref[...] = jnp.zeros((SYSTOLIC_ROW_TILE, 128), dtype=jnp.float32)
+                s_scratch_ref[...] = jnp.zeros((SYSTOLIC_ROW_TILE, 128), dtype=jnp.float32)
+                bval_scratch_ref[...] = jnp.full(
+                    (SYSTOLIC_ROW_TILE, 128), -jnp.inf, dtype=jnp.float32
+                )
+                bidx_scratch_ref[...] = jnp.zeros((SYSTOLIC_ROW_TILE, 128), dtype=jnp.int32)
+
+            tile = logits_ref[...].astype(jnp.float32)
+            col_ids = v_start + jnp.arange(vocab_tile, dtype=jnp.int32)[None, :]
+            valid_cols = col_ids < valid_v
+            masked_tile = jnp.where(valid_cols, tile, -1e30)
+
+            m_curr_1d = jnp.max(masked_tile, axis=1, keepdims=True)
+            shifted = masked_tile - m_curr_1d
+            exp_curr = jnp.where(valid_cols, jnp.exp(shifted), 0.0)
+            l_curr_1d = jnp.sum(exp_curr, axis=1, keepdims=True)
+            s_curr_1d = jnp.sum(
+                jnp.where(valid_cols, exp_curr * shifted, 0.0), axis=1, keepdims=True
+            )
+
+            # Broadcast [128, 1] reductions across [128, 128] VMEM register tile
+            m_curr = jnp.broadcast_to(m_curr_1d, (SYSTOLIC_ROW_TILE, 128))
+            l_curr = jnp.broadcast_to(l_curr_1d, (SYSTOLIC_ROW_TILE, 128))
+            s_curr = jnp.broadcast_to(s_curr_1d, (SYSTOLIC_ROW_TILE, 128))
+
+            m_old = m_scratch_ref[...]
+            l_old = l_scratch_ref[...]
+            s_old = s_scratch_ref[...]
+
+            m_new = jnp.maximum(m_old, m_curr)
+            dm_old = jnp.where(jnp.isfinite(m_old) & jnp.isfinite(m_new), m_old - m_new, 0.0)
+            dm_curr = jnp.where(jnp.isfinite(m_curr) & jnp.isfinite(m_new), m_curr - m_new, 0.0)
+            alpha = jnp.where(jnp.isfinite(m_old), jnp.exp(dm_old), 0.0)
+            beta = jnp.where(l_curr > 0.0, jnp.exp(dm_curr), 0.0)
+
+            s_old_term = jnp.where(l_old > 0.0, alpha * s_old + alpha * l_old * dm_old, 0.0)
+            s_curr_term = jnp.where(
+                l_curr > 0.0, beta * s_curr + beta * l_curr * dm_curr, 0.0
+            )
+
+            l_new = alpha * l_old + beta * l_curr
+            s_new = s_old_term + s_curr_term
+
+            m_scratch_ref[...] = m_new
+            l_scratch_ref[...] = l_new
+            s_scratch_ref[...] = s_new
+
+            tile_bval_1d = m_curr_1d
+            tile_bidx_1d = jnp.min(
+                jnp.where(masked_tile == tile_bval_1d, col_ids, v_start + vocab_tile),
+                axis=1,
+                keepdims=True,
+            ).astype(jnp.int32)
+            tile_bval = jnp.broadcast_to(tile_bval_1d, (SYSTOLIC_ROW_TILE, 128))
+            tile_bidx = jnp.broadcast_to(tile_bidx_1d, (SYSTOLIC_ROW_TILE, 128))
+
+            prev_bval = bval_scratch_ref[...]
+            prev_bidx = bidx_scratch_ref[...]
+            take_curr = tile_bval > prev_bval
+            bidx_scratch_ref[...] = jnp.where(take_curr, tile_bidx, prev_bidx)
+            bval_scratch_ref[...] = jnp.maximum(prev_bval, tile_bval)
+
+            @pl.when(v_idx == num_v_tiles - 1)
+            def _write_final_tile() -> None:
+                safe_l = jnp.maximum(l_scratch_ref[...], 1e-30)
+                out_entropy_ref[...] = jnp.log(safe_l) - (s_scratch_ref[...] / safe_l)
+                out_argmax_ref[...] = bidx_scratch_ref[...]
+
         valid_v_mat = jnp.full((8, 128), valid_vocab_size, dtype=jnp.int32)
 
         out_shapes = (
@@ -347,13 +362,15 @@ def _build_cached_jax_op(
                 pltpu.VMEM((SYSTOLIC_ROW_TILE, 128), jnp.int32),
             ],
             grid=(num_m_tiles, num_v_tiles),
-            dimension_semantics=("parallel", "arbitrary"),
         )
 
         entropy_2d, argmax_2d = pl.pallas_call(
             _pallas_online_entropy_argmax_kernel,
             out_shape=out_shapes,
             grid_spec=grid_spec,
+            compiler_params=pltpu.CompilerParams(
+                dimension_semantics=("parallel", "arbitrary")
+            ),
         )(padded_logits_2d, valid_v_mat)
 
         # Slice unpadded batch * (k_pad + 1) rows from static tile buffer
@@ -399,10 +416,21 @@ def _build_cached_jax_op(
             next_draft_mask,
         )
 
-    return _bind_torch_tpu_jax_op(_jax_static_block_verify_fn, world_size=world_size)
+    op_name = f"fp8blockdiff::pallas_block_verify_w{world_size}"
+    bound_op = _bind_torch_tpu_jax_op(
+        _jax_static_block_verify_fn,
+        world_size=world_size,
+        op_name=op_name,
+    )
+    _WORLD_JAX_OPS[world_size] = bound_op
+    return bound_op
 
 
-def _bind_torch_tpu_jax_op(jax_fn: Callable[..., Any], world_size: int) -> Callable[..., Any]:
+def _bind_torch_tpu_jax_op(
+    jax_fn: Callable[..., Any],
+    world_size: int,
+    op_name: str | None = None,
+) -> Callable[..., Any]:
     """Bind `jax_fn` via `torch.tpu.pallas.jax_op` using live signature introspection."""
     import jax
     import torch_tpu  # noqa: F401
@@ -414,40 +442,63 @@ def _bind_torch_tpu_jax_op(jax_fn: Callable[..., Any], world_size: int) -> Calla
             "Run scripts/phase0_discover.py and inspect docs/api_discovery.md."
         )
 
-    P = jax.sharding.PartitionSpec
-    if hasattr(pallas_bridge, "get_pallas_mesh"):
-        mesh_sig = inspect.signature(pallas_bridge.get_pallas_mesh)
-        if "axis_names" in mesh_sig.parameters and "mesh_shape" in mesh_sig.parameters:
-            mesh = pallas_bridge.get_pallas_mesh(axis_names=("tp",), mesh_shape=(world_size,))
-        else:
-            mesh = jax.sharding.Mesh(np.array(jax.devices()[:world_size]), ("tp",))
-    else:
-        mesh = jax.sharding.Mesh(np.array(jax.devices()[:world_size]), ("tp",))
+    resolved_name = op_name or (
+        f"fp8blockdiff::pallas_block_verify_{abs(hash(jax_fn)) % 10_000_000}"
+    )
 
-    # Replicate verification inputs across single-device or post-gather TP mesh
-    in_specs = [P(None, None), P(None, None), P(None, None), P(None, None)]
-    out_specs = [P(None), P(None), P(None, None), P(None, None), P(None), P(None, None)]
+    mesh = None
+    in_specs = None
+    out_specs = None
+    if (
+        world_size > 1
+        and hasattr(torch, "distributed")
+        and torch.distributed.is_initialized()
+    ):
+        P = jax.sharding.PartitionSpec
+        if hasattr(pallas_bridge, "get_pallas_mesh"):
+            mesh_sig = inspect.signature(pallas_bridge.get_pallas_mesh)
+            if "axis_names" in mesh_sig.parameters and "mesh_shape" in mesh_sig.parameters:
+                mesh = pallas_bridge.get_pallas_mesh(
+                    axis_names=("tp",), mesh_shape=(world_size,)
+                )
+        if mesh is not None:
+            in_specs = (P(None, None), P(None, None), P(None, None), P(None, None))
+            out_specs = (
+                P(None),
+                P(None),
+                P(None, None),
+                P(None, None),
+                P(None),
+                P(None, None),
+            )
 
     jax_op_fn = pallas_bridge.jax_op
     sig = inspect.signature(jax_op_fn)
     params = sig.parameters
     kwargs: dict[str, Any] = {}
 
-    if "name" in params:
-        kwargs["name"] = (
-            f"fp8blockdiff::pallas_block_verify_{abs(hash(jax_fn)) % 10_000_000}"
-        )
-    if "mesh" in params:
-        kwargs["mesh"] = mesh
-    if "input_partition_specs" in params:
-        kwargs["input_partition_specs"] = in_specs
-    elif "in_specs" in params:
-        kwargs["in_specs"] = in_specs
-    if "output_partition_specs" in params:
-        kwargs["output_partition_specs"] = out_specs
-    elif "out_specs" in params:
-        kwargs["out_specs"] = out_specs
+    if mesh is not None:
+        if "mesh" in params:
+            kwargs["mesh"] = mesh
+        if "input_partition_specs" in params:
+            kwargs["input_partition_specs"] = in_specs
+        elif "in_specs" in params:
+            kwargs["in_specs"] = in_specs
+        if "output_partition_specs" in params:
+            kwargs["output_partition_specs"] = out_specs
+        elif "out_specs" in params:
+            kwargs["out_specs"] = out_specs
 
+    param_list = list(params.values())
+    if (
+        len(param_list) >= 2
+        and param_list[0].name == "name"
+        and param_list[1].name in ("fn", "op")
+    ):
+        return jax_op_fn(resolved_name, jax_fn, **kwargs)
+
+    if "name" in params:
+        kwargs["name"] = resolved_name
     if "op" in params:
         kwargs["op"] = jax_fn
         return jax_op_fn(**kwargs)
@@ -513,20 +564,14 @@ def pallas_entropy_block_verify(
     ctrl_2d = torch.nn.functional.pad(ctrl_flat, (0, 128 - ctrl_flat.numel())).unsqueeze(0)
     ctrl_2d = ctrl_2d.expand(8, 128).contiguous()
 
-    custom_op = _build_cached_jax_op(
-        m_pad=m_pad,
-        v_pad=v_pad,
-        valid_vocab_size=v_valid,
-        b_pad=b_pad,
-        k_pad=k_pad,
-        world_size=world_size,
-    )
+    custom_op = _get_or_create_jax_op(world_size)
 
     acc_len, bonus_tok, tok_ent, ent_mask, next_k, next_mask = custom_op(
         padded_logits_2d,
         draft_padded,
         mask_padded,
         ctrl_2d,
+        int(v_valid),
     )
 
     return BlockVerifyOutputs(

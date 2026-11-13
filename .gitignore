@@ -38,6 +38,7 @@ models_cache/
 !artifacts/traces/.gitkeep
 !artifacts/plots/.gitkeep
 !artifacts/logs/*.json
+!artifacts/logs/*.jsonl
 !artifacts/logs/*.csv
 !artifacts/plots/*.png
 !artifacts/plots/*.pdf
@@ -45,3 +46,4 @@ models_cache/
 !artifacts/traces/*.xplane.pb.gz
 !artifacts/traces/**/*.xplane.pb
 !artifacts/traces/**/*.xplane.pb.gz
+artifacts/traces/**/*.op_stats*.pb

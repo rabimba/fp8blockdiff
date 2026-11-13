@@ -1,0 +1,13 @@
+{"event": "plugin_initialized", "pid": 908222, "hooked_target": "vllm_torchtpu.layers.adapter.sample.rejection_sampler.RejectionSampler.forward", "k_pad": 32, "min_k": 4, "entropy_thresh": 1.65}
+{"event": "plugin_initialized", "pid": 908511, "hooked_target": "vllm_torchtpu.layers.adapter.sample.rejection_sampler.RejectionSampler.forward", "k_pad": 32, "min_k": 4, "entropy_thresh": 1.65}
+{"event": "verify_step", "step": 1, "ts": 1794285973.2629194, "batch_size": 2, "mean_entropy_nats": 0.7758, "mean_accepted_len": 0.0, "next_effective_k": 30}
+{"event": "verify_step", "step": 2, "ts": 1794285973.5409899, "batch_size": 8, "mean_entropy_nats": 1.404, "mean_accepted_len": 0.375, "next_effective_k": 23}
+{"event": "verify_step", "step": 32, "ts": 1794285974.228364, "batch_size": 4, "mean_entropy_nats": 0.7466, "mean_accepted_len": 0.0, "next_effective_k": 30}
+{"event": "verify_step", "step": 63, "ts": 1794285974.9073598, "batch_size": 2, "mean_entropy_nats": 0.3379, "mean_accepted_len": 0.0, "next_effective_k": 32}
+{"event": "verify_step", "step": 4917, "ts": 1794286006.1611288, "batch_size": 4, "mean_entropy_nats": 0.346, "mean_accepted_len": 1.25, "next_effective_k": 32}
+{"event": "verify_step", "step": 6218, "ts": 1794286014.528, "batch_size": 4, "mean_entropy_nats": 0.8801, "mean_accepted_len": 0.0, "next_effective_k": 29}
+{"event": "verify_step", "step": 6219, "ts": 1794286014.6446707, "batch_size": 8, "mean_entropy_nats": 1.3706, "mean_accepted_len": 0.5, "next_effective_k": 23}
+{"event": "verify_step", "step": 6950, "ts": 1794286028.6655343, "batch_size": 16, "mean_entropy_nats": 1.4078, "mean_accepted_len": 0.5, "next_effective_k": 22}
+{"event": "verify_step", "step": 6951, "ts": 1794286029.015772, "batch_size": 16, "mean_entropy_nats": 1.1602, "mean_accepted_len": 1.0, "next_effective_k": 26}
+{"event": "verify_step", "step": 7359, "ts": 1794286033.9604967, "batch_size": 32, "mean_entropy_nats": 1.4339, "mean_accepted_len": 0.0, "next_effective_k": 14}
+{"event": "verify_step", "step": 7360, "ts": 1794286034.2060838, "batch_size": 32, "mean_entropy_nats": 1.6228, "mean_accepted_len": 0.0, "next_effective_k": 14}

@@ -44,8 +44,9 @@ if [[ ! -f "artifacts/logs/spec_matrix_runs.json" ]]; then
   cleanup_stale_tpu_processes
   python3 benchmarks/run_spec_matrix.py --full --resume
 else
-  # Re-verify cached end-to-end serving pipeline via fast smoke pass while preserving full logs
-  python3 benchmarks/run_spec_matrix.py --smoke
+  # Re-verify cached end-to-end serving pipeline via smoke + full resume checks
+  python3 benchmarks/run_spec_matrix.py --smoke --resume
+  python3 benchmarks/run_spec_matrix.py --full --resume
 fi
 
 cleanup_stale_tpu_processes

@@ -94,3 +94,25 @@ bash -c "source scripts/env_common.sh && python3 benchmarks/fit_roofline_model.p
 bash scripts/run_all.sh
 ```
 - Once `bash scripts/run_all.sh` exits with code `0`, stage, commit, and push all generated `artifacts/logs/*`, `artifacts/plots/*`, `artifacts/traces/*` (compressing `.xplane.pb` > 50 MB to `.xplane.pb.gz` if needed for GitHub's 100 MB file limit—`parse_xprof.py` and `validate_artifacts.py` natively support `.xplane.pb.gz`!), `docs/api_discovery.md`, `docs/paper_results_summary.md`, `README.md`, and `STATUS.json`.
+
+---
+
+## 5. Critical Codebase & Live TPU v7 (`torch_tpu 0.2.0` / `vllm 0.31.0`) Invariants
+
+- **Test Suite Split (`pyproject.toml`)**:
+  - Host-only (<3s, no TPU required): `pytest -v -m host_only` (`tests/test_host_math_and_xprof_parser.py`). Single test: `pytest -v tests/test_host_math_and_xprof_parser.py -k <test_name>`.
+  - TPU-required: `pytest -v -s -m tpu_required` (`tests/test_baseline_serving.py`, `tests/test_pallas_block_verify.py`). `pallas_entropy_block_verify` raises `RuntimeError` on CPU tensors by design; use `pytorch_reference_block_verify` or `tiled_online_entropy_and_argmax_numpy` for host math verification.
+- **`torch_tpu 0.2.0` Public vs Internal APIs**:
+  - `torch.tpu.is_available()`, `torch.tpu.device_count()`, and `torch.tpu.synchronize()` are decorated `@internal_only` in `torch_tpu 0.2.0` and raise `RuntimeError` if called directly by user code; always call `torch.accelerator.is_available()`, `torch.accelerator.device_count()`, and `torch.accelerator.synchronize()`.
+  - `torch.tpu.get_device_name(0)` (`"TPU v7"`) and `torch.tpu.get_device_properties(0)` work directly; on dual-core TPU7x (`2` TensorCores per physical chip), `total_memory` is reported per core (~96 GiB/core = ~192 GiB/chip).
+- **`torch.tpu.pallas.jax_op` Signature & Annotations (`kernels/pallas_block_verify.py`)**:
+  - Live signature is `jax_op(name, fn=None, /, *, donate_argnums=None, mesh=None, input_partition_specs=None, output_partition_specs=None)` (`name` and `fn` are positional-only).
+  - `jax_op` invokes `inspect.signature(inspect.unwrap(fn), eval_str=True)` to build a `torch.library.custom_op` schema; `jax` must be imported at module scope whenever `from __future__ import annotations` is active.
+  - `get_pallas_mesh` requires `torch.distributed.is_initialized()`; pass `mesh=None` for single-worker (`world_size == 1`) execution.
+  - Dynamic runtime thresholds and active batch sizes must be passed via the `[8] float32` `control_params` tensor (`[entropy_threshold, active_B, min_k, max_k, ridge_budget, 0, 0, 0]`), never as Python scalars, to preserve `new_tpu_xla_compilations == 0` across padded `(128, K_pad, 1024)` tiles.
+- **`vllm.general_plugins` & Profiler Flags (`vllm 0.31.0` + `vllm-torchtpu-core`)**:
+  - Always run `pip install -e . --no-build-isolation --no-deps` so `fp8blockdiff_pallas` registers in `vllm.general_plugins`; the plugin activates in `EngineCore` workers only when `FP8_BLOCKDIFF_ENABLE_PALLAS_VERIFY=1` is exported and wraps `vllm_torchtpu.layers.adapter.sample.rejection_sampler.RejectionSampler`.
+  - Pass `--profiler-config '{"profiler":"torch","torch_profiler_dir":"<abs_path>"}'` when launching `vllm.entrypoints.openai.api_server` so `/start_profile` and `/stop_profile` HTTP routes are mounted and `.xplane.pb` traces are written via `TpuProfilerConfig`.
+- **Artifact Validation & Git Whitelist (`scripts/validate_artifacts.py`, `.gitignore`)**:
+  - `validate_artifacts.py` requires all 8 JSON logs + `spec_matrix_summary.csv`, `chip_count >= 1`, `backend_provider in ("torch_tpu", "jax_tpu")`, `new_tpu_xla_compilations == 0`, $\ge 3$ binary `.xplane.pb[.gz]` traces with `plane_count >= 1`, 4 PNG plots (`>4 KiB`), and `PENDING_TPU_V7_EXECUTION` removed from `README.md`, `docs/api_discovery.md`, and `docs/paper_results_summary.md`.
+

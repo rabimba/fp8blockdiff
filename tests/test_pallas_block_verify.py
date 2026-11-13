@@ -180,7 +180,9 @@ def test_qwen3_full_vocab_and_zero_xla_recompilations_across_20_dynamic_steps() 
     # Warmup 2 steps to populate XLA compilation graph once
     for _ in range(2):
         acc, bonus, next_k, active_mask = step_fn(base_logits, init_draft, active_mask, ctrl)
-    if hasattr(torch.tpu, "synchronize"):
+    if hasattr(torch, "accelerator") and hasattr(torch.accelerator, "synchronize"):
+        torch.accelerator.synchronize()
+    elif hasattr(torch.tpu, "synchronize"):
         torch.tpu.synchronize()
 
     before_metrics = snapshot_xla_compilation_metrics()
@@ -207,7 +209,9 @@ def test_qwen3_full_vocab_and_zero_xla_recompilations_across_20_dynamic_steps() 
 
         t0 = time.perf_counter()
         acc, bonus, next_k, active_mask = step_fn(base_logits, dyn_draft, active_mask, ctrl)
-        if hasattr(torch.tpu, "synchronize"):
+        if hasattr(torch, "accelerator") and hasattr(torch.accelerator, "synchronize"):
+            torch.accelerator.synchronize()
+        elif hasattr(torch.tpu, "synchronize"):
             torch.tpu.synchronize()
         step_latencies_ms.append((time.perf_counter() - t0) * 1000.0)
         observed_accept_means.append(float(acc.to("cpu").to(torch.float32).mean().item()))

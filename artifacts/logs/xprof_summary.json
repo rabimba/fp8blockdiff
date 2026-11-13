@@ -1,0 +1,427 @@
+{
+  "timestamp_utc": "2026-11-10T05:11:05.000755+00:00",
+  "chip_count": 4,
+  "num_traces_parsed": 21,
+  "traces": {
+    "autoreg_bf16_B1": {
+      "plane_count": 5,
+      "total_device_time_ms": 177.3907,
+      "achieved_tflops": 60.726,
+      "achieved_hbm_gbps": 2742.119,
+      "mxu_utilization_pct": 5.903,
+      "hbm_bw_utilization_pct": 73.981,
+      "host_device_sync_count": 96,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 160.5181,
+        "kv_attention_ms": 9.3737,
+        "draft_model_ms": 0.0,
+        "pallas_verify_ms": 0.0,
+        "collective_or_sync_ms": 0.1219,
+        "other_device_ms": 7.377
+      },
+      "trace_file": "artifacts/traces/autoreg_bf16_B1/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 28799963
+    },
+    "autoreg_bf16_B32": {
+      "plane_count": 7,
+      "total_device_time_ms": 516.6554,
+      "achieved_tflops": 228.619,
+      "achieved_hbm_gbps": 1262.25,
+      "mxu_utilization_pct": 22.223,
+      "hbm_bw_utilization_pct": 34.159,
+      "host_device_sync_count": 108,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 288.2148,
+        "kv_attention_ms": 183.8726,
+        "draft_model_ms": 0.0,
+        "pallas_verify_ms": 0.0,
+        "collective_or_sync_ms": 0.548,
+        "other_device_ms": 44.02
+      },
+      "trace_file": "artifacts/traces/autoreg_bf16_B32/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 53456358
+    },
+    "autoreg_bf16_B8": {
+      "plane_count": 5,
+      "total_device_time_ms": 252.3612,
+      "achieved_tflops": 127.384,
+      "achieved_hbm_gbps": 2103.292,
+      "mxu_utilization_pct": 12.382,
+      "hbm_bw_utilization_pct": 56.825,
+      "host_device_sync_count": 102,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 189.2121,
+        "kv_attention_ms": 48.5201,
+        "draft_model_ms": 0.0,
+        "pallas_verify_ms": 0.0,
+        "collective_or_sync_ms": 0.2464,
+        "other_device_ms": 14.3826
+      },
+      "trace_file": "artifacts/traces/autoreg_bf16_B8/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 44103262
+    },
+    "autoreg_fp8_B1": {
+      "plane_count": 5,
+      "total_device_time_ms": 115.1034,
+      "achieved_tflops": 93.656,
+      "achieved_hbm_gbps": 2299.9,
+      "mxu_utilization_pct": 4.838,
+      "hbm_bw_utilization_pct": 57.363,
+      "host_device_sync_count": 96,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 90.0903,
+        "kv_attention_ms": 8.0992,
+        "draft_model_ms": 0.0,
+        "pallas_verify_ms": 0.0,
+        "collective_or_sync_ms": 0.1641,
+        "other_device_ms": 16.7497
+      },
+      "trace_file": "artifacts/traces/autoreg_fp8_B1/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 39526354
+    },
+    "autoreg_fp8_B32": {
+      "plane_count": 7,
+      "total_device_time_ms": 375.6917,
+      "achieved_tflops": 276.713,
+      "achieved_hbm_gbps": 1066.117,
+      "mxu_utilization_pct": 14.078,
+      "hbm_bw_utilization_pct": 28.804,
+      "host_device_sync_count": 108,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 151.2395,
+        "kv_attention_ms": 147.957,
+        "draft_model_ms": 0.0,
+        "pallas_verify_ms": 0.0,
+        "collective_or_sync_ms": 3.0997,
+        "other_device_ms": 73.3956
+      },
+      "trace_file": "artifacts/traces/autoreg_fp8_B32/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 79192708
+    },
+    "autoreg_fp8_B8": {
+      "plane_count": 5,
+      "total_device_time_ms": 184.2728,
+      "achieved_tflops": 213.241,
+      "achieved_hbm_gbps": 1659.66,
+      "mxu_utilization_pct": 10.806,
+      "hbm_bw_utilization_pct": 43.915,
+      "host_device_sync_count": 102,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 108.771,
+        "kv_attention_ms": 40.1149,
+        "draft_model_ms": 0.0,
+        "pallas_verify_ms": 0.0,
+        "collective_or_sync_ms": 0.1904,
+        "other_device_ms": 35.1964
+      },
+      "trace_file": "artifacts/traces/autoreg_fp8_B8/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 52102803
+    },
+    "dflash_fp8_k16_B1": {
+      "plane_count": 5,
+      "total_device_time_ms": 73.6289,
+      "achieved_tflops": 152.003,
+      "achieved_hbm_gbps": 2238.464,
+      "mxu_utilization_pct": 8.816,
+      "hbm_bw_utilization_pct": 37.304,
+      "host_device_sync_count": 42,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 39.8953,
+        "kv_attention_ms": 3.8231,
+        "draft_model_ms": 21.2154,
+        "pallas_verify_ms": 0.7169,
+        "collective_or_sync_ms": 1.2487,
+        "other_device_ms": 6.7294
+      },
+      "trace_file": "artifacts/traces/dflash_fp8_k16_B1/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 40941023
+    },
+    "dflash_fp8_k16_B32": {
+      "plane_count": 7,
+      "total_device_time_ms": 842.7316,
+      "achieved_tflops": 438.1,
+      "achieved_hbm_gbps": 779.223,
+      "mxu_utilization_pct": 25.949,
+      "hbm_bw_utilization_pct": 20.767,
+      "host_device_sync_count": 81,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 234.4661,
+        "kv_attention_ms": 206.7461,
+        "draft_model_ms": 184.0954,
+        "pallas_verify_ms": 17.8751,
+        "collective_or_sync_ms": 7.6052,
+        "other_device_ms": 191.9436
+      },
+      "trace_file": "artifacts/traces/dflash_fp8_k16_B32/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 106038264
+    },
+    "dflash_fp8_k16_B8": {
+      "plane_count": 7,
+      "total_device_time_ms": 205.638,
+      "achieved_tflops": 497.081,
+      "achieved_hbm_gbps": 1466.396,
+      "mxu_utilization_pct": 29.115,
+      "hbm_bw_utilization_pct": 34.057,
+      "host_device_sync_count": 63,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 84.9948,
+        "kv_attention_ms": 21.0688,
+        "draft_model_ms": 43.8129,
+        "pallas_verify_ms": 4.7632,
+        "collective_or_sync_ms": 2.9273,
+        "other_device_ms": 48.0711
+      },
+      "trace_file": "artifacts/traces/dflash_fp8_k16_B8/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 86693227
+    },
+    "dflash_fp8_k32_B1": {
+      "plane_count": 5,
+      "total_device_time_ms": 94.5051,
+      "achieved_tflops": 234.879,
+      "achieved_hbm_gbps": 2136.61,
+      "mxu_utilization_pct": 13.988,
+      "hbm_bw_utilization_pct": 39.825,
+      "host_device_sync_count": 51,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 48.6598,
+        "kv_attention_ms": 4.7639,
+        "draft_model_ms": 26.9462,
+        "pallas_verify_ms": 1.0517,
+        "collective_or_sync_ms": 1.4179,
+        "other_device_ms": 11.6655
+      },
+      "trace_file": "artifacts/traces/dflash_fp8_k32_B1/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 42626198
+    },
+    "dflash_fp8_k32_B32": {
+      "plane_count": 7,
+      "total_device_time_ms": 1154.5746,
+      "achieved_tflops": 484.803,
+      "achieved_hbm_gbps": 816.062,
+      "mxu_utilization_pct": 28.449,
+      "hbm_bw_utilization_pct": 21.964,
+      "host_device_sync_count": 87,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 343.616,
+        "kv_attention_ms": 247.3475,
+        "draft_model_ms": 223.6242,
+        "pallas_verify_ms": 24.7506,
+        "collective_or_sync_ms": 16.3995,
+        "other_device_ms": 298.8369
+      },
+      "trace_file": "artifacts/traces/dflash_fp8_k32_B32/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 96503419
+    },
+    "dflash_fp8_k32_B8": {
+      "plane_count": 5,
+      "total_device_time_ms": 308.3822,
+      "achieved_tflops": 556.769,
+      "achieved_hbm_gbps": 1066.086,
+      "mxu_utilization_pct": 33.658,
+      "hbm_bw_utilization_pct": 26.637,
+      "host_device_sync_count": 63,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 113.3674,
+        "kv_attention_ms": 35.2632,
+        "draft_model_ms": 71.6787,
+        "pallas_verify_ms": 8.9476,
+        "collective_or_sync_ms": 1.2651,
+        "other_device_ms": 77.8601
+      },
+      "trace_file": "artifacts/traces/dflash_fp8_k32_B8/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 86011519
+    },
+    "dflash_fp8_k8_B1": {
+      "plane_count": 5,
+      "total_device_time_ms": 91.1807,
+      "achieved_tflops": 93.923,
+      "achieved_hbm_gbps": 2311.655,
+      "mxu_utilization_pct": 5.349,
+      "hbm_bw_utilization_pct": 38.508,
+      "host_device_sync_count": 54,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 50.3186,
+        "kv_attention_ms": 4.5163,
+        "draft_model_ms": 26.3414,
+        "pallas_verify_ms": 0.829,
+        "collective_or_sync_ms": 1.7658,
+        "other_device_ms": 7.4096
+      },
+      "trace_file": "artifacts/traces/dflash_fp8_k8_B1/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 41663816
+    },
+    "dflash_fp8_k8_B32": {
+      "plane_count": 7,
+      "total_device_time_ms": 611.9589,
+      "achieved_tflops": 432.242,
+      "achieved_hbm_gbps": 891.151,
+      "mxu_utilization_pct": 24.859,
+      "hbm_bw_utilization_pct": 23.245,
+      "host_device_sync_count": 84,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 191.2047,
+        "kv_attention_ms": 145.2522,
+        "draft_model_ms": 122.3083,
+        "pallas_verify_ms": 10.405,
+        "collective_or_sync_ms": 7.3794,
+        "other_device_ms": 135.4094
+      },
+      "trace_file": "artifacts/traces/dflash_fp8_k8_B32/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 118451359
+    },
+    "dflash_fp8_k8_B8": {
+      "plane_count": 7,
+      "total_device_time_ms": 172.6783,
+      "achieved_tflops": 393.122,
+      "achieved_hbm_gbps": 1625.168,
+      "mxu_utilization_pct": 22.362,
+      "hbm_bw_utilization_pct": 33.214,
+      "host_device_sync_count": 60,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 76.2959,
+        "kv_attention_ms": 16.0614,
+        "draft_model_ms": 38.4112,
+        "pallas_verify_ms": 2.925,
+        "collective_or_sync_ms": 3.1657,
+        "other_device_ms": 35.8192
+      },
+      "trace_file": "artifacts/traces/dflash_fp8_k8_B8/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 84544108
+    },
+    "dflash_pallas_adaptive_fp8_B1": {
+      "plane_count": 5,
+      "total_device_time_ms": 98.8765,
+      "achieved_tflops": 74.083,
+      "achieved_hbm_gbps": 2361.427,
+      "mxu_utilization_pct": 4.348,
+      "hbm_bw_utilization_pct": 43.926,
+      "host_device_sync_count": 60,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 55.5556,
+        "kv_attention_ms": 4.9073,
+        "draft_model_ms": 29.2658,
+        "pallas_verify_ms": 0.0,
+        "collective_or_sync_ms": 2.0011,
+        "other_device_ms": 7.1467
+      },
+      "trace_file": "artifacts/traces/dflash_pallas_adaptive_fp8_B1/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 42680065
+    },
+    "dflash_pallas_adaptive_fp8_B32": {
+      "plane_count": 7,
+      "total_device_time_ms": 569.973,
+      "achieved_tflops": 448.495,
+      "achieved_hbm_gbps": 835.075,
+      "mxu_utilization_pct": 25.761,
+      "hbm_bw_utilization_pct": 21.407,
+      "host_device_sync_count": 72,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 182.8111,
+        "kv_attention_ms": 141.1587,
+        "draft_model_ms": 112.8549,
+        "pallas_verify_ms": 0.0,
+        "collective_or_sync_ms": 7.0441,
+        "other_device_ms": 126.1041
+      },
+      "trace_file": "artifacts/traces/dflash_pallas_adaptive_fp8_B32/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 104001203
+    },
+    "dflash_pallas_adaptive_fp8_B8": {
+      "plane_count": 7,
+      "total_device_time_ms": 185.2568,
+      "achieved_tflops": 382.385,
+      "achieved_hbm_gbps": 1685.448,
+      "mxu_utilization_pct": 21.774,
+      "hbm_bw_utilization_pct": 38.291,
+      "host_device_sync_count": 69,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 85.6028,
+        "kv_attention_ms": 16.9743,
+        "draft_model_ms": 43.0242,
+        "pallas_verify_ms": 0.0,
+        "collective_or_sync_ms": 3.4371,
+        "other_device_ms": 36.2184
+      },
+      "trace_file": "artifacts/traces/dflash_pallas_adaptive_fp8_B8/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 98647599
+    },
+    "eagle3_fp8_B1": {
+      "plane_count": 5,
+      "total_device_time_ms": 89.7979,
+      "achieved_tflops": 95.326,
+      "achieved_hbm_gbps": 2253.251,
+      "mxu_utilization_pct": 5.543,
+      "hbm_bw_utilization_pct": 31.702,
+      "host_device_sync_count": 51,
+      "xla_compilation_count": 0,
+      "breakdown_ms": {
+        "target_mxu_ms": 63.4887,
+        "kv_attention_ms": 4.5552,
+        "draft_model_ms": 9.0431,
+        "pallas_verify_ms": 0.7799,
+        "collective_or_sync_ms": 0.5285,
+        "other_device_ms": 11.4026
+      },
+      "trace_file": "artifacts/traces/eagle3_fp8_B1/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 41414589
+    },
+    "eagle3_fp8_B32": {
+      "plane_count": 7,
+      "total_device_time_ms": 362.8909,
+      "achieved_tflops": 421.317,
+      "achieved_hbm_gbps": 1109.216,
+      "mxu_utilization_pct": 22.788,
+      "hbm_bw_utilization_pct": 20.076,
+      "host_device_sync_count": 66,
+      "xla_compilation_count": 4,
+      "breakdown_ms": {
+        "target_mxu_ms": 150.9187,
+        "kv_attention_ms": 95.661,
+        "draft_model_ms": 12.1547,
+        "pallas_verify_ms": 5.7442,
+        "collective_or_sync_ms": 4.8808,
+        "other_device_ms": 93.5316
+      },
+      "trace_file": "artifacts/traces/eagle3_fp8_B32/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 97473329
+    },
+    "eagle3_fp8_B8": {
+      "plane_count": 7,
+      "total_device_time_ms": 166.6722,
+      "achieved_tflops": 298.026,
+      "achieved_hbm_gbps": 1758.192,
+      "mxu_utilization_pct": 16.12,
+      "hbm_bw_utilization_pct": 26.75,
+      "host_device_sync_count": 63,
+      "xla_compilation_count": 1,
+      "breakdown_ms": {
+        "target_mxu_ms": 98.2995,
+        "kv_attention_ms": 16.7966,
+        "draft_model_ms": 11.176,
+        "pallas_verify_ms": 1.2158,
+        "collective_or_sync_ms": 2.1001,
+        "other_device_ms": 37.0842
+      },
+      "trace_file": "artifacts/traces/eagle3_fp8_B8/rkaranjai-nanodit-dev.xplane.pb.gz",
+      "trace_size_bytes": 81285220
+    }
+  }
+}

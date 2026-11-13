@@ -112,6 +112,7 @@ def _build_speculative_config(
     if spec_type == "dflash_pallas_adaptive":
         dflash = manifest["dflash_drafter"]
         k_pad = int(mode_entry.get("padded_block_capacity_k", 32))
+        active_k = int(mode_entry.get("active_draft_k", 16))
         min_k = int(mode_entry.get("min_block_k", 4))
         ent_thresh = float(mode_entry.get("entropy_threshold_nats", 1.65))
         telem_file = (
@@ -124,13 +125,14 @@ def _build_speculative_config(
                 "FP8_BLOCKDIFF_MIN_K": str(min_k),
                 "FP8_BLOCKDIFF_ENTROPY_THRESH": str(ent_thresh),
                 "FP8_BLOCKDIFF_TELEMETRY_JSONL": str(telem_file),
+                "TPU_GREEDY_TOP_TOKENS": "1",
             }
         )
         return (
             {
                 "method": "dflash",
                 "model": dflash["repo_id"],
-                "num_speculative_tokens": k_pad,
+                "num_speculative_tokens": active_k,
             },
             extra_env,
         )
@@ -183,10 +185,18 @@ def _capture_inproc_fallback_xplane_if_server_omitted(
     import subprocess
 
     helper_code = f"""
+import shutil
 import torch
+import torch.profiler
 import torch_tpu
 from pathlib import Path
 from kernels.pallas_block_verify import pallas_entropy_block_verify
+
+def _sync():
+    if hasattr(torch, "accelerator") and hasattr(torch.accelerator, "synchronize"):
+        torch.accelerator.synchronize()
+    elif hasattr(torch.tpu, "synchronize"):
+        torch.tpu.synchronize()
 
 device = torch.device("tpu")
 bsz = {batch_size}
@@ -199,25 +209,30 @@ ctrl = torch.tensor([1.65, float(bsz), 4.0, float(k_pad), 512.0, 0.0, 0.0, 0.0],
 
 fn = torch.compile(lambda l, d, m, c: pallas_entropy_block_verify(l, d, m, c, vocab, 1), backend="tpu")
 _ = fn(logits, draft, mask, ctrl)
-if hasattr(torch.tpu, "synchronize"):
-    torch.tpu.synchronize()
+_sync()
 
-logdir = "{str(trace_dir)}"
-if hasattr(torch.tpu, "profiler") and hasattr(torch.tpu.profiler, "profile"):
-    with torch.tpu.profiler.profile(logdir=logdir):
-        for _ in range(4):
-            _ = fn(logits, draft, mask, ctrl)
-        if hasattr(torch.tpu, "synchronize"):
-            torch.tpu.synchronize()
-else:
-    with torch.profiler.profile(
-        on_trace_ready=torch.profiler.tensorboard_trace_handler(logdir)
-    ) as prof:
-        for _ in range(4):
-            _ = fn(logits, draft, mask, ctrl)
-            prof.step()
-        if hasattr(torch.tpu, "synchronize"):
-            torch.tpu.synchronize()
+logdir = Path("{str(trace_dir)}")
+logdir.mkdir(parents=True, exist_ok=True)
+exp_cfg = None
+if hasattr(torch.tpu, "profiler") and hasattr(torch.tpu.profiler, "TpuProfilerConfig"):
+    exp_cfg = torch.tpu.profiler.TpuProfilerConfig(
+        mode=torch.tpu.profiler.TpuProfileMode.TRACE_ONLY,
+        run_dir=str(logdir),
+    )
+
+with torch.profiler.profile(
+    activities=[torch.profiler.ProfilerActivity.CPU],
+    experimental_config=exp_cfg,
+) as prof:
+    for _ in range(4):
+        _ = fn(logits, draft, mask, ctrl)
+    _sync()
+
+for f in list(logdir.rglob("*.xplane.pb*")):
+    if f.parent != logdir:
+        dest = logdir / f.name
+        if not dest.exists():
+            shutil.move(str(f), str(dest))
 """
     subprocess.run([sys.executable, "-c", helper_code], check=True)
 
@@ -315,6 +330,14 @@ def main() -> None:
         }
 
     quality_by_mode: dict[str, dict[str, Any]] = {}
+    qual_path = REPO_ROOT / "artifacts" / "logs" / "quality_equivalence.json"
+    if args.resume and qual_path.exists():
+        try:
+            prev_qual = json.loads(qual_path.read_text(encoding="utf-8"))
+            if isinstance(prev_qual.get("modes"), dict):
+                quality_by_mode = dict(prev_qual["modes"])
+        except Exception:
+            pass
 
     for mode in modes:
         mode_id = mode["id"]
@@ -333,8 +356,15 @@ def main() -> None:
         if not active_batches:
             continue
 
+        expected_mode_keys = {
+            (mode_id, sname, bsz) for sname in suites for bsz in active_batches
+        }
+        if args.resume and expected_mode_keys.issubset(completed_keys):
+            print(f"\n[phase3] === Skipping completed Mode: {mode_id} ({mode['label']}) ===")
+            continue
+
         spec_cfg, extra_env = _build_speculative_config(mode, manifest)
-        mode_trace_root = REPO_ROOT / "artifacts" / "traces" / f"{mode_id}_server"
+        mode_trace_root = Path("/tmp") / f"fp8blockdiff_vllm_prof_{mode_id}"
 
         srv_cfg = VLLMServerConfig(
             model=target_model,
@@ -356,6 +386,7 @@ def main() -> None:
 
         print(f"\n[phase3] === Starting Mode: {mode_id} ({mode['label']}) ===")
         profiled_batches_done: set[int] = set()
+        warmed_batches_done: set[int] = set()
 
         with ManagedVLLMServer(srv_cfg) as server:
             for suite_name, (warmup_prompts, eval_prompts) in suites.items():
@@ -378,11 +409,27 @@ def main() -> None:
                         print(f"[phase3] Skipping completed {key}")
                         continue
 
-                    capture_trace = (bsz in xprof_batches) and (bsz not in profiled_batches_done)
-                    trace_dir = REPO_ROOT / "artifacts" / "traces" / f"{mode_id}_B{bsz}"
-                    if capture_trace:
-                        trace_dir.mkdir(parents=True, exist_ok=True)
-                        server.start_profile()
+                    warm_batch = (
+                        [warmup_prompts[i % len(warmup_prompts)] for i in range(bsz)]
+                        if warmup_prompts
+                        else (
+                            eval_prompts[:bsz]
+                            if len(eval_prompts) >= bsz
+                            else (eval_prompts * ((bsz // max(len(eval_prompts), 1)) + 1))[:bsz]
+                        )
+                    )
+                    if bsz not in warmed_batches_done:
+                        _ = asyncio.run(
+                            run_concurrent_prompt_batch(
+                                base_url=srv_cfg.base_url,
+                                model=target_model,
+                                prompts=warm_batch,
+                                concurrency=bsz,
+                                max_tokens=24,
+                                temperature=0.0,
+                            )
+                        )
+                        warmed_batches_done.add(bsz)
 
                     prom_before = server.scrape_prometheus_spec_metrics()
                     telemetry, wall_sec = asyncio.run(
@@ -397,13 +444,30 @@ def main() -> None:
                     )
                     prom_after = server.scrape_prometheus_spec_metrics()
 
+                    capture_trace = (bsz in xprof_batches) and (bsz not in profiled_batches_done)
+                    trace_dir = REPO_ROOT / "artifacts" / "traces" / f"{mode_id}_B{bsz}"
                     if capture_trace:
+                        trace_dir.mkdir(parents=True, exist_ok=True)
+                        server.start_profile()
+                        _ = asyncio.run(
+                            run_concurrent_prompt_batch(
+                                base_url=srv_cfg.base_url,
+                                model=target_model,
+                                prompts=warm_batch,
+                                concurrency=bsz,
+                                max_tokens=min(32, max_tokens),
+                                temperature=0.0,
+                            )
+                        )
                         server.stop_profile()
-                        # Copy any server-flushed .xplane.pb into canonical mode_B directory
-                        for f in mode_trace_root.rglob("*.xplane.pb*"):
+                        # Move any server-flushed .xplane.pb into canonical mode_B directory
+                        for f in list(mode_trace_root.rglob("*.xplane.pb*")):
                             dest = trace_dir / f.name
-                            if not dest.exists():
-                                dest.write_bytes(f.read_bytes())
+                            dest.write_bytes(f.read_bytes())
+                            try:
+                                f.unlink()
+                            except OSError:
+                                pass
                         profiled_batches_done.add(bsz)
 
                     ttfts = np.array([t.ttft_ms for t in telemetry], dtype=np.float64)

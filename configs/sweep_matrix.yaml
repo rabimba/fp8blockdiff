@@ -83,6 +83,7 @@ full_sweep:
       precision: "fp8"
       spec_type: "dflash_pallas_adaptive"
       padded_block_capacity_k: 32
+      active_draft_k: 8
       min_block_k: 4
       entropy_threshold_nats: 1.65
       survival_threshold: 0.20

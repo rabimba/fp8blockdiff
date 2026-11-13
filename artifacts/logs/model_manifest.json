@@ -1,0 +1,45 @@
+{
+  "timestamp_utc": "2026-11-10T00:25:02.982871+00:00",
+  "profile": "qwen3_8b",
+  "metadata_only": false,
+  "target_fp8": {
+    "repo_id": "Qwen/Qwen3-8B-FP8",
+    "local_path": "/tmp/tpu_logs/fp8blockdiff_cache/hf_cache/hub/models--Qwen--Qwen3-8B-FP8/snapshots/220b46e3b2180893580a4454f21f22d3ebb187d3",
+    "architectures": [
+      "Qwen3ForCausalLM"
+    ],
+    "vocab_size": 151936,
+    "quantization_config": {
+      "activation_scheme": "dynamic",
+      "fmt": "e4m3",
+      "quant_method": "fp8",
+      "weight_block_size": [
+        128,
+        128
+      ]
+    }
+  },
+  "target_bf16": {
+    "repo_id": "Qwen/Qwen3-8B",
+    "verified_remote": true,
+    "local_path": "/tmp/tpu_logs/fp8blockdiff_cache/hf_cache/hub/models--Qwen--Qwen3-8B/snapshots/b968826d9c46dd6066d109eabc6255188de91218"
+  },
+  "dflash_drafter": {
+    "repo_id": "z-lab/Qwen3-8B-DFlash-b16",
+    "local_path": "/tmp/tpu_logs/fp8blockdiff_cache/hf_cache/hub/models--z-lab--Qwen3-8B-DFlash-b16/snapshots/9b41424b7109f9c5413454f481b09a82b85333f4",
+    "architectures": [
+      "DFlashDraftModel"
+    ],
+    "vocab_size": 151936,
+    "block_size": 16
+  },
+  "eagle3_drafter": {
+    "repo_id": "RedHatAI/Qwen3-8B-speculator.eagle3",
+    "local_path": "/tmp/tpu_logs/fp8blockdiff_cache/hf_cache/hub/models--RedHatAI--Qwen3-8B-speculator.eagle3/snapshots/08610ffa01dd9f16731fe8f627b85905b6aa51c4",
+    "architectures": [
+      "Eagle3Speculator"
+    ],
+    "vocab_size": 151936
+  },
+  "fallback_spec_method": "ngram"
+}

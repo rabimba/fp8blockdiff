@@ -21,9 +21,11 @@ import csv
 from datetime import datetime, timezone
 import gzip
 import json
+import os
 from pathlib import Path
 import struct
 import sys
+import tempfile
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -183,10 +185,32 @@ def parse_xspace_bytes(raw_bytes: bytes, precision: str = "fp8", chip_count: int
                 elif "memory_bandwidth_utilization" in sname or "hbm_utilization" in sname:
                     direct_hbm_pcts.append(sval)
 
+        # Identify whether this device plane has an "XLA Ops" line so we do not
+        # double-count "XLA Modules", "XLA Ops", and "Async XLA Ops" on real TPU traces.
+        parsed_lines: list[tuple[str, list[memoryview]]] = []
         for lblob in line_blobs:
+            lname = ""
+            levents: list[memoryview] = []
             for lfnum, lwtype, lval in _iter_proto_fields(lblob):
-                if lfnum != 7 or lwtype != 2:
+                if lfnum == 2 and lwtype == 2:
+                    lname = bytes(lval).decode("utf-8", errors="replace").strip().lower()
+                elif lfnum in (4, 7) and lwtype == 2:
+                    levents.append(lval)
+            if levents:
+                parsed_lines.append((lname, levents))
+
+        has_xla_ops_line = is_device_plane and any(
+            "xla ops" in lname and "async" not in lname for lname, _ in parsed_lines
+        )
+
+        for lname, levents in parsed_lines:
+            if is_device_plane and has_xla_ops_line:
+                if not ("xla ops" in lname and "async" not in lname):
                     continue
+            elif is_device_plane and ("counter" in lname or "async" in lname):
+                continue
+
+            for lval in levents:
                 ev_meta_id = 0
                 dur_ps = 0
                 ev_stats: list[tuple[int, float | str]] = []
@@ -224,18 +248,38 @@ def parse_xspace_bytes(raw_bytes: bytes, precision: str = "fp8", chip_count: int
                         host_sync_count += 1
                 else:
                     # Categorize TPU device execution duration
-                    if "pallas_block_verify" in ev_name or "fp8blockdiff" in ev_name:
+                    if (
+                        "pallas_block_verify" in ev_name
+                        or "fp8blockdiff" in ev_name
+                        or "_jax_static_block_verify_fn" in ev_name
+                    ):
                         cat_ps["pallas_verify_ps"] += max(dur_ps, 0)
                     elif any(k in ev_name for k in ("dflash", "eagle", "draft", "speculator")):
                         cat_ps["draft_model_ps"] += max(dur_ps, 0)
                     elif any(
                         k in ev_name
-                        for k in ("attention", "splash", "paged", "flash", "kv_cache")
+                        for k in (
+                            "attention",
+                            "splash",
+                            "paged",
+                            "flash",
+                            "kv_cache",
+                            "rpam-",
+                            "rpad-",
+                        )
                     ):
                         cat_ps["kv_attention_ps"] += max(dur_ps, 0)
                     elif any(
                         k in ev_name
-                        for k in ("all-reduce", "all-gather", "reduce-scatter", "collective")
+                        for k in (
+                            "all-reduce",
+                            "all-gather",
+                            "reduce-scatter",
+                            "collective",
+                            "copy-start",
+                            "copy-done",
+                            "async-done",
+                        )
                     ):
                         cat_ps["collective_or_sync_ps"] += max(dur_ps, 0)
                     elif any(
@@ -303,10 +347,13 @@ def parse_xspace_bytes(raw_bytes: bytes, precision: str = "fp8", chip_count: int
 def _enrich_with_xprof_plugin_if_available(
     trace_file: Path, base_metrics: dict[str, Any]
 ) -> dict[str, Any]:
-    """Query official `xprof` C++ converter (`overview_page`) if installed on TPU VM."""
+    """Query official `xprof` C++ converter (`overview_page` + `op_profile`) if installed on TPU VM."""
     try:
         from xprof.convert import _pywrap_profiler_plugin  # type: ignore[import-not-found]
+    except Exception:
+        return base_metrics
 
+    try:
         raw_data, _ = _pywrap_profiler_plugin.xspace_to_tools_data(
             [str(trace_file)], "overview_page"
         )
@@ -314,21 +361,141 @@ def _enrich_with_xprof_plugin_if_available(
             payload = json.loads(
                 raw_data.decode("utf-8") if isinstance(raw_data, bytes) else raw_data
             )
-            text_blob = json.dumps(payload)
-            # Extract official overview MXU / HBM utilization if present in JSON table
             if isinstance(payload, list):
                 for section in payload:
-                    if isinstance(section, dict) and "p" in section:
+                    if isinstance(section, dict) and isinstance(section.get("p"), dict):
                         props = section["p"]
                         if "mxu_utilization_percent" in props:
-                            base_metrics["mxu_utilization_pct"] = round(
-                                float(props["mxu_utilization_percent"]), 3
-                            )
+                            val_str = str(props["mxu_utilization_percent"]).rstrip("%").strip()
+                            val = float(val_str) if val_str else 0.0
+                            if val > 0.0:
+                                base_metrics["mxu_utilization_pct"] = round(val, 3)
                         if "memory_bw_utilization_percent" in props:
-                            base_metrics["hbm_bw_utilization_pct"] = round(
-                                float(props["memory_bw_utilization_percent"]), 3
-                            )
-            del text_blob
+                            val_str = str(props["memory_bw_utilization_percent"]).rstrip("%").strip()
+                            val = float(val_str) if val_str else 0.0
+                            if val > 0.0:
+                                base_metrics["hbm_bw_utilization_pct"] = round(val, 3)
+    except Exception:
+        pass
+
+    try:
+        raw_op, _ = _pywrap_profiler_plugin.xspace_to_tools_data(
+            [str(trace_file)], "op_profile"
+        )
+        if raw_op:
+            op_payload = json.loads(
+                raw_op.decode("utf-8") if isinstance(raw_op, bytes) else raw_op
+            )
+            bp = op_payload.get("byProgram", {}) if isinstance(op_payload, dict) else {}
+            bp_metrics = bp.get("metrics", {}) if isinstance(bp, dict) else {}
+            if bp_metrics:
+                flops_frac = float(bp_metrics.get("flops", 0.0) or 0.0)
+                bw_utils = bp_metrics.get("bandwidthUtils", [])
+                hbm_frac = float(bw_utils[0]) if isinstance(bw_utils, list) and bw_utils else 0.0
+                norm_ps = float(
+                    bp_metrics.get("normalizedTimePs", 0.0)
+                    or bp_metrics.get("rawTime", 0.0)
+                    or 0.0
+                )
+                raw_flops = float(bp_metrics.get("rawFlops", 0.0) or 0.0)
+                raw_bytes_arr = bp_metrics.get("rawBytesAccessedArray", [])
+                raw_hbm_bytes = (
+                    float(raw_bytes_arr[0])
+                    if isinstance(raw_bytes_arr, list) and raw_bytes_arr
+                    else 0.0
+                )
+                if flops_frac > 0.0:
+                    base_metrics["mxu_utilization_pct"] = round(flops_frac * 100.0, 3)
+                if hbm_frac > 0.0:
+                    base_metrics["hbm_bw_utilization_pct"] = round(hbm_frac * 100.0, 3)
+                if norm_ps > 0.0:
+                    active_sec = norm_ps * 1e-12
+                    if raw_flops > 0.0:
+                        base_metrics["achieved_tflops"] = round(
+                            (raw_flops / active_sec) / 1e12, 3
+                        )
+                    if raw_hbm_bytes > 0.0:
+                        base_metrics["achieved_hbm_gbps"] = round(
+                            (raw_hbm_bytes / active_sec) / 1e9, 3
+                        )
+
+            children = bp.get("children", []) if isinstance(bp, dict) else []
+            if isinstance(children, list) and children:
+                cat_ps = {
+                    "target_mxu_ps": 0.0,
+                    "kv_attention_ps": 0.0,
+                    "draft_model_ps": 0.0,
+                    "pallas_verify_ps": 0.0,
+                    "collective_or_sync_ps": 0.0,
+                    "other_device_ps": 0.0,
+                }
+                for prog in children:
+                    if not isinstance(prog, dict):
+                        continue
+                    pname = str(prog.get("name", "")).lower()
+                    if pname == "idle":
+                        continue
+                    ptime_ps = float(prog.get("metrics", {}).get("rawTime", 0.0) or 0.0)
+                    pchildren = prog.get("children", [])
+                    has_pallas_verify_op = False
+                    if isinstance(pchildren, list):
+                        for cat in pchildren:
+                            for op in (cat.get("children", []) if isinstance(cat, dict) else []):
+                                op_name = str(op.get("name", "")).lower()
+                                if (
+                                    "_jax_static_block_verify_fn" in op_name
+                                    or "pallas_block_verify" in op_name
+                                ):
+                                    has_pallas_verify_op = True
+                                    break
+                    if has_pallas_verify_op or "spec_bonus_and_target_logits" in pname:
+                        cat_ps["pallas_verify_ps"] += ptime_ps
+                    elif (
+                        "dflash" in pname
+                        or "eagle" in pname
+                        or "draft" in pname
+                        or "pallas_l1350c0" in pname
+                    ):
+                        cat_ps["draft_model_ps"] += ptime_ps
+                    elif isinstance(pchildren, list) and pchildren:
+                        for cat in pchildren:
+                            if not isinstance(cat, dict):
+                                continue
+                            cname = str(cat.get("name", "")).lower()
+                            ctime_ps = float(cat.get("metrics", {}).get("rawTime", 0.0) or 0.0)
+                            if any(k in cname for k in ("convolution", "dot", "matmul", "gemm")):
+                                cat_ps["target_mxu_ps"] += ctime_ps
+                            elif "custom-call" in cname:
+                                cat_ps["kv_attention_ps"] += ctime_ps
+                            elif any(
+                                k in cname
+                                for k in (
+                                    "async-done",
+                                    "copy-start",
+                                    "copy-done",
+                                    "all-reduce",
+                                    "all-gather",
+                                    "reduce-scatter",
+                                    "collective",
+                                )
+                            ):
+                                cat_ps["collective_or_sync_ps"] += ctime_ps
+                            else:
+                                cat_ps["other_device_ps"] += ctime_ps
+                    else:
+                        cat_ps["other_device_ps"] += ptime_ps
+
+                tot_ps = sum(cat_ps.values())
+                if tot_ps > 0.0:
+                    base_metrics["total_device_time_ms"] = round(tot_ps * 1e-9, 4)
+                    base_metrics["breakdown_ms"] = {
+                        "target_mxu_ms": round(cat_ps["target_mxu_ps"] * 1e-9, 4),
+                        "kv_attention_ms": round(cat_ps["kv_attention_ps"] * 1e-9, 4),
+                        "draft_model_ms": round(cat_ps["draft_model_ps"] * 1e-9, 4),
+                        "pallas_verify_ms": round(cat_ps["pallas_verify_ps"] * 1e-9, 4),
+                        "collective_or_sync_ms": round(cat_ps["collective_or_sync_ps"] * 1e-9, 4),
+                        "other_device_ms": round(cat_ps["other_device_ps"] * 1e-9, 4),
+                    }
     except Exception:
         pass
     return base_metrics
@@ -339,10 +506,20 @@ def parse_xplane_file(
 ) -> dict[str, Any]:
     if trace_path.suffix == ".gz":
         raw = gzip.decompress(trace_path.read_bytes())
+        metrics = parse_xspace_bytes(raw, precision=precision, chip_count=chip_count)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_pb = Path(tmpdir) / trace_path.stem
+            tmp_pb.write_bytes(raw)
+            op_stats_cache = trace_path.parent / "ALL_HOSTS.op_stats_v2.pb"
+            if op_stats_cache.exists():
+                try:
+                    os.symlink(op_stats_cache, Path(tmpdir) / "ALL_HOSTS.op_stats_v2.pb")
+                except OSError:
+                    pass
+            metrics = _enrich_with_xprof_plugin_if_available(tmp_pb, metrics)
     else:
         raw = trace_path.read_bytes()
-    metrics = parse_xspace_bytes(raw, precision=precision, chip_count=chip_count)
-    if trace_path.suffix != ".gz":
+        metrics = parse_xspace_bytes(raw, precision=precision, chip_count=chip_count)
         metrics = _enrich_with_xprof_plugin_if_available(trace_path, metrics)
     metrics["trace_file"] = str(trace_path.relative_to(REPO_ROOT))
     metrics["trace_size_bytes"] = len(raw)
@@ -382,13 +559,15 @@ def main() -> None:
     if probe_path.exists():
         probe = json.loads(probe_path.read_text(encoding="utf-8"))
         chip_count = int(probe.get("topology", {}).get("chip_count", 1))
+    active_tp_chips = min(chip_count, max(1, int(os.environ.get("FP8_BLOCKDIFF_TP_SIZE", "1"))))
 
     parsed_by_tag: dict[str, dict[str, Any]] = {}
     for tf in trace_files:
         # Directory convention: artifacts/traces/<mode_id>_B<batch>/...xplane.pb
-        run_tag = tf.parent.name if tf.parent != args.traces_dir else tf.stem.split(".")[0]
+        rel_parts = tf.relative_to(args.traces_dir).parts
+        run_tag = rel_parts[0] if len(rel_parts) > 1 else tf.stem.split(".")[0]
         precision = "bf16" if "bf16" in run_tag.lower() else "fp8"
-        parsed = parse_xplane_file(tf, precision=precision, chip_count=chip_count)
+        parsed = parse_xplane_file(tf, precision=precision, chip_count=active_tp_chips)
         parsed_by_tag[run_tag] = parsed
 
     xprof_out = {

@@ -129,7 +129,10 @@ def audit_and_optionally_install_packages(auto_install: bool = True) -> dict[str
         "torch": (["torch"], "torch"),
         "torch_tpu": (["torch-tpu", "torch_tpu"], "torch_tpu"),
         "vllm": (["vllm"], "vllm"),
-        "vllm_torchtpu": (["vllm-torchtpu", "vllm_torchtpu", "tpu-inference"], "vllm_torchtpu"),
+        "vllm_torchtpu": (
+            ["vllm-torchtpu", "vllm-torchtpu-core", "vllm_torchtpu", "tpu-inference"],
+            "vllm_torchtpu",
+        ),
         "jax": (["jax"], "jax"),
         "pallas": (["jax"], "jax.experimental.pallas"),
         "tokamax": (["tokamax", "openxla-tokamax"], "tokamax"),
@@ -330,7 +333,9 @@ def verify_bf16_and_fp8_matmul_on_tpu() -> dict[str, Any]:
 
 
 def _sync_tpu(torch_mod: Any) -> None:
-    if hasattr(torch_mod, "tpu") and hasattr(torch_mod.tpu, "synchronize"):
+    if hasattr(torch_mod, "accelerator") and hasattr(torch_mod.accelerator, "synchronize"):
+        torch_mod.accelerator.synchronize()
+    elif hasattr(torch_mod, "tpu") and hasattr(torch_mod.tpu, "synchronize"):
         torch_mod.tpu.synchronize()
 
 

@@ -98,7 +98,8 @@ def get_vllm_cli_help_text() -> str:
 def build_vllm_server_cmd(cfg: VLLMServerConfig, topology: TPUTopology) -> list[str]:
     """Construct verified CLI arguments against live installed vllm-torchtpu flags."""
     help_text = get_vllm_cli_help_text()
-    tp_size = cfg.tensor_parallel_size or topology.chip_count
+    env_tp = int(os.environ.get("FP8_BLOCKDIFF_TP_SIZE", "0"))
+    tp_size = cfg.tensor_parallel_size or (env_tp if env_tp > 0 else topology.chip_count)
 
     cmd = [
         sys.executable,
@@ -142,6 +143,13 @@ def build_vllm_server_cmd(cfg: VLLMServerConfig, topology: TPUTopology) -> list[
             )
         cmd.extend(["--speculative-config", json.dumps(cfg.speculative_config)])
 
+    if cfg.profiler_dir is not None and "--profiler-config" in help_text:
+        prof_cfg = {
+            "profiler": "torch",
+            "torch_profiler_dir": str(cfg.profiler_dir.resolve()),
+        }
+        cmd.extend(["--profiler-config", json.dumps(prof_cfg)])
+
     return cmd
 
 
@@ -158,23 +166,44 @@ class ManagedVLLMServer:
 
     def __enter__(self) -> "ManagedVLLMServer":
         self.topology = require_tpu_device()
-        env = dict(os.environ)
-        env.update(ensure_persistent_cache_env())
+        base_env = dict(os.environ)
+        base_env.update(ensure_persistent_cache_env())
         if self.cfg.profiler_dir is not None:
             self.cfg.profiler_dir.mkdir(parents=True, exist_ok=True)
-            env["VLLM_TORCH_PROFILER_DIR"] = str(self.cfg.profiler_dir)
+            base_env["VLLM_TORCH_PROFILER_DIR"] = str(self.cfg.profiler_dir)
         if self.cfg.extra_env:
-            env.update(self.cfg.extra_env)
+            base_env.update(self.cfg.extra_env)
 
         cmd = build_vllm_server_cmd(self.cfg, self.topology)
-        self._group = ManagedProcessGroup(cmd=cmd, env=env, log_path=self.log_path)
-        proc = self._group.__enter__()
-        try:
-            self._wait_until_healthy(proc)
-        except Exception:
-            self._group.__exit__(*sys.exc_info())
-            raise
-        return self
+        candidate_chips = ["1", "2", "3", "0"]
+        last_exc: Exception | None = None
+        for attempt in range(6):
+            env = dict(base_env)
+            if env.get("FP8_BLOCKDIFF_TP_SIZE", "1") == "1" and self.topology.chip_count >= 2:
+                chip = candidate_chips[attempt % len(candidate_chips)]
+                pport = str(8475 + int(chip))
+                mport1 = str(8439 + 2 * int(chip))
+                mport2 = str(8440 + 2 * int(chip))
+                env["TPU_VISIBLE_CHIPS"] = chip
+                env["TPU_VISIBLE_DEVICES"] = chip
+                env["TPU_PROCESS_PORT"] = pport
+                env["TPU_PROCESS_ADDRESSES"] = f"localhost:{pport}"
+                env["TPU_RUNTIME_METRICS_PORTS"] = f"{mport1},{mport2}"
+            self._group = ManagedProcessGroup(cmd=cmd, env=env, log_path=self.log_path)
+            proc = self._group.__enter__()
+            try:
+                self._wait_until_healthy(proc)
+                return self
+            except Exception as exc:
+                self._group.__exit__(*sys.exc_info())
+                self._group = None
+                last_exc = exc
+                if "Failed to acquire a TPU device node" in str(exc) and attempt < 5:
+                    time.sleep(10.0)
+                    continue
+                raise
+        assert last_exc is not None
+        raise last_exc
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self._group is not None:
@@ -225,7 +254,7 @@ class ManagedVLLMServer:
 
     def stop_profile(self) -> bool:
         """Stop vLLM server-side Torch/TPU profiler and flush .xplane.pb traces."""
-        with httpx.Client(timeout=60.0) as client:
+        with httpx.Client(timeout=180.0) as client:
             resp = client.post(f"{self.cfg.base_url}/stop_profile")
             return resp.status_code == 200
 

@@ -21,6 +21,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 import json
 import math
+import os
 from pathlib import Path
 import sys
 from typing import Any
@@ -538,7 +539,8 @@ def main() -> None:
 
     runs_payload = json.loads(args.runs_json.read_text(encoding="utf-8"))
     runs = runs_payload["runs"]
-    chip_count = int(runs_payload.get("topology", {}).get("chip_count", 1))
+    host_chip_count = int(runs_payload.get("topology", {}).get("chip_count", 1))
+    chip_count = min(host_chip_count, max(1, int(os.environ.get("FP8_BLOCKDIFF_TP_SIZE", "1"))))
 
     xprof_payload = json.loads(args.xprof_json.read_text(encoding="utf-8"))
     xprof_traces = xprof_payload.get("traces", {})

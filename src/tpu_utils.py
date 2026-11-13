@@ -74,6 +74,7 @@ def ensure_persistent_cache_env() -> dict[str, str]:
     candidates = [
         Path("/mnt/localssd/fp8blockdiff_cache"),
         Path("/scratch/fp8blockdiff_cache"),
+        Path("/tmp/tpu_logs/fp8blockdiff_cache"),
         Path(f"/var/tmp/fp8blockdiff_cache_{os.environ.get('USER', 'tpu')}"),
     ]
     cache_base: Path | None = None
@@ -94,6 +95,13 @@ def ensure_persistent_cache_env() -> dict[str, str]:
         "VLLM_XLA_CACHE_PATH": os.environ.get(
             "VLLM_XLA_CACHE_PATH", str(cache_base / "vllm_xla_cache")
         ),
+        "VLLM_CACHE_ROOT": os.environ.get(
+            "VLLM_CACHE_ROOT", str(cache_base / "vllm_cache")
+        ),
+        "TORCH_TPU_TIER3_COMPILATION_CACHE_ROOT": os.environ.get(
+            "TORCH_TPU_TIER3_COMPILATION_CACHE_ROOT",
+            str(cache_base / "tier3_pjrt_cache"),
+        ),
         "XLA_CACHE_DIR": os.environ.get("XLA_CACHE_DIR", str(cache_base / "xla_cache")),
         "JAX_COMPILATION_CACHE_DIR": os.environ.get(
             "JAX_COMPILATION_CACHE_DIR", str(cache_base / "jax_cache")
@@ -104,12 +112,50 @@ def ensure_persistent_cache_env() -> dict[str, str]:
         "TORCHINDUCTOR_CACHE_DIR": os.environ.get(
             "TORCHINDUCTOR_CACHE_DIR", str(cache_base / "torchinductor_cache")
         ),
+        "HF_HOME": os.environ.get("HF_HOME", str(cache_base / "hf_cache")),
+        "HF_HUB_DISABLE_XET": os.environ.get("HF_HUB_DISABLE_XET", "1"),
         "PJRT_DEVICE": os.environ.get("PJRT_DEVICE", "TPU"),
+        "FP8_BLOCKDIFF_TP_SIZE": os.environ.get("FP8_BLOCKDIFF_TP_SIZE", "1"),
     }
+    if env_map["FP8_BLOCKDIFF_TP_SIZE"] == "1":
+        chip_id = os.environ.get("FP8_BLOCKDIFF_CHIP_ID", "1")
+        tpu_port = os.environ.get("FP8_BLOCKDIFF_TPU_PORT", "8476")
+        env_map.update(
+            {
+                "FP8_BLOCKDIFF_CHIP_ID": chip_id,
+                "TPU_VISIBLE_CHIPS": chip_id,
+                "TPU_VISIBLE_DEVICES": chip_id,
+                "ALLOW_MULTIPLE_LIBTPU_LOAD": "true",
+                "TPU_CHIPS_PER_HOST_BOUNDS": "1,1,1",
+                "CHIPS_PER_HOST_BOUNDS": "1,1,1",
+                "TPU_HOST_BOUNDS": "1,1,1",
+                "TPU_PROCESS_PORT": tpu_port,
+                "TPU_PROCESS_ADDRESSES": f"localhost:{tpu_port}",
+                "TPU_RUNTIME_METRICS_PORTS": "8441,8442",
+            }
+        )
+    ca_bundle = Path("/etc/ssl/certs/ca-certificates.crt")
+    if ca_bundle.is_file():
+        env_map["SSL_CERT_FILE"] = os.environ.get("SSL_CERT_FILE", str(ca_bundle))
+        env_map["REQUESTS_CA_BUNDLE"] = os.environ.get("REQUESTS_CA_BUNDLE", str(ca_bundle))
+        env_map["CURL_CA_BUNDLE"] = os.environ.get("CURL_CA_BUNDLE", str(ca_bundle))
     for key, val in env_map.items():
         os.environ[key] = val
-        if key.endswith("_PATH") or key.endswith("_DIR") or key.endswith("_BASE"):
+        if any(key.endswith(sfx) for sfx in ("_PATH", "_DIR", "_BASE", "_ROOT", "HF_HOME")):
             Path(val).mkdir(parents=True, exist_ok=True)
+    shm_dir = Path("/dev/shm")
+    shm_cache = shm_dir / "torch_tpu_cache"
+    target_shm_cache = cache_base / "torch_tpu_shm_cache"
+    target_shm_cache.mkdir(parents=True, exist_ok=True)
+    if shm_dir.exists() and os.access(shm_dir, os.W_OK) and not shm_cache.is_symlink():
+        try:
+            if shm_cache.exists():
+                import shutil
+
+                shutil.rmtree(shm_cache, ignore_errors=True)
+            shm_cache.symlink_to(target_shm_cache)
+        except OSError:
+            pass
     return env_map
 
 
@@ -123,11 +169,27 @@ def list_vfio_tpu_nodes() -> list[str]:
     return nodes
 
 
+_OWNED_WORKER_MARKERS = (
+    "vllm.entrypoints",
+    "vllm serve",
+    "EngineCore",
+    "ray::",
+    "VLLM::",
+    "fp8blockdiff",
+    "test_baseline_serving",
+    "test_pallas_block_verify",
+    "run_spec_matrix",
+    "phase0_discover",
+)
+
+
 def scan_tpu_lock_holders(exclude_current_process: bool = True) -> list[dict[str, Any]]:
-    """Inspect /proc/*/fd directly to identify any process holding /dev/vfio/<N> or libtpu locks."""
+    """Inspect /proc/*/fd directly to identify any owned process holding /dev/vfio/<N> or libtpu locks."""
     my_pid = os.getpid()
     holders: dict[int, dict[str, Any]] = {}
-    target_prefixes = tuple(list_vfio_tpu_nodes() + ["/tmp/libtpu_lockfile"])
+    allow_multi = os.environ.get("ALLOW_MULTIPLE_LIBTPU_LOAD", "").lower() in ("1", "true")
+    extra_locks = [] if allow_multi else ["/tmp/libtpu_lockfile"]
+    target_prefixes = tuple(list_vfio_tpu_nodes() + extra_locks)
     if not target_prefixes:
         return []
 
@@ -148,8 +210,10 @@ def scan_tpu_lock_holders(exclude_current_process: bool = True) -> list[dict[str
             except OSError:
                 continue
             if any(target == p or target.startswith(p + " ") for p in target_prefixes):
+                cmdline = _read_proc_cmdline(pid)
+                if allow_multi and not any(m in cmdline for m in _OWNED_WORKER_MARKERS):
+                    continue
                 if pid not in holders:
-                    cmdline = _read_proc_cmdline(pid)
                     holders[pid] = {
                         "pid": pid,
                         "cmdline": cmdline,
@@ -171,6 +235,7 @@ def _read_proc_cmdline(pid: int) -> str:
 
 def cleanup_stale_tpu_locks(allow_kill: bool = True, timeout_sec: float = 8.0) -> list[int]:
     """Verify no stale Python/Ray/vLLM processes hold /dev/vfio/* or libtpu locks (Contract #3)."""
+    ensure_persistent_cache_env()
     killed_pids: list[int] = []
     my_pid = os.getpid()
     my_uid = os.getuid()
@@ -225,8 +290,9 @@ def cleanup_stale_tpu_locks(allow_kill: bool = True, timeout_sec: float = 8.0) -
         time.sleep(0.25)
 
     # Clean up stale unlocked /tmp/libtpu_lockfile if owned by current user
+    allow_multi = os.environ.get("ALLOW_MULTIPLE_LIBTPU_LOAD", "").lower() in ("1", "true")
     lockfile = Path("/tmp/libtpu_lockfile")
-    if lockfile.exists() and not scan_tpu_lock_holders(exclude_current_process=False):
+    if not allow_multi and lockfile.exists() and not scan_tpu_lock_holders(exclude_current_process=False):
         try:
             if lockfile.stat().st_uid == my_uid:
                 lockfile.unlink(missing_ok=True)
@@ -255,38 +321,59 @@ def probe_tpu_topology(strict: bool = True) -> TPUTopology | None:
         import torch
         import torch_tpu  # noqa: F401
 
-        if hasattr(torch, "tpu") and torch.tpu.is_available():
-            count = int(torch.tpu.device_count())
-            if count > 0:
-                kind = "Cloud TPU (torch_tpu)"
-                hbm_bytes = 192 * (1024**3)  # fallback if property API omits total_memory
-                if hasattr(torch.tpu, "get_device_name"):
-                    try:
-                        kind = str(torch.tpu.get_device_name(0))
-                    except Exception:
-                        pass
-                if hasattr(torch.tpu, "get_device_properties"):
-                    try:
-                        props = torch.tpu.get_device_properties(0)
-                        if hasattr(props, "name") and props.name:
-                            kind = str(props.name)
-                        if hasattr(props, "total_memory") and int(props.total_memory) > 0:
-                            hbm_bytes = int(props.total_memory)
-                    except Exception:
-                        pass
-                # Cross-enrich device kind & exact HBM bytes from jax.devices() if available in-proc
-                # Note: Avoid initializing both PJRT clients concurrently if they contend on locks;
-                # only enrich from sysfs / tpu-info metadata if needed.
-                enriched_kind, enriched_hbm = _enrich_from_sysfs_or_env(kind, hbm_bytes)
-                return TPUTopology(
-                    chip_count=count,
-                    device_kind=enriched_kind,
-                    hbm_bytes_per_chip=enriched_hbm,
-                    vfio_devices=vfio_nodes,
-                    backend_provider="torch_tpu",
-                    hostname=hostname,
-                    python_version=py_ver,
-                )
+        tpu_avail = False
+        count = 0
+        if hasattr(torch, "accelerator") and torch.accelerator.is_available():
+            accel = torch.accelerator.current_accelerator()
+            if getattr(accel, "type", "") == "tpu":
+                tpu_avail = True
+                count = int(torch.accelerator.device_count())
+        if not tpu_avail and hasattr(torch, "tpu"):
+            try:
+                if torch.tpu.is_available():
+                    tpu_avail = True
+                    count = int(torch.tpu.device_count())
+            except Exception:
+                pass
+
+        if tpu_avail and count > 0:
+            kind = "Cloud TPU (torch_tpu)"
+            hbm_bytes = 192 * (1024**3)  # fallback if property API omits total_memory
+            if hasattr(torch.tpu, "get_device_name"):
+                try:
+                    kind = str(torch.tpu.get_device_name(0))
+                except Exception:
+                    pass
+            if hasattr(torch.tpu, "get_device_properties"):
+                try:
+                    props = torch.tpu.get_device_properties(0)
+                    if hasattr(props, "name") and props.name:
+                        kind = str(props.name)
+                    if hasattr(props, "total_memory") and int(props.total_memory) > 0:
+                        hbm_bytes = int(props.total_memory)
+                except Exception:
+                    pass
+            # On dual-core TPU v7 (TPU7x), torch_tpu exposes 2 TensorCore devices per physical chip
+            # (~96 GiB HBM per core = ~192 GiB HBM per physical chip).
+            physical_chips = count
+            if any(k in kind.lower() for k in ("v7", "7x", "ironwood")):
+                if vfio_nodes and count == 2 * len(vfio_nodes):
+                    physical_chips = len(vfio_nodes)
+                    if hbm_bytes <= 110 * (1024**3):
+                        hbm_bytes *= 2
+                elif hbm_bytes <= 110 * (1024**3) and count >= 2 and count % 2 == 0:
+                    physical_chips = count // 2
+                    hbm_bytes *= 2
+            enriched_kind, enriched_hbm = _enrich_from_sysfs_or_env(kind, hbm_bytes)
+            return TPUTopology(
+                chip_count=physical_chips,
+                device_kind=enriched_kind,
+                hbm_bytes_per_chip=enriched_hbm,
+                vfio_devices=vfio_nodes,
+                backend_provider="torch_tpu",
+                hostname=hostname,
+                python_version=py_ver,
+            )
     except ImportError:
         pass
 
@@ -370,8 +457,8 @@ class ManagedProcessGroup:
         self._log_handle: IO[str] | None = None
 
     def __enter__(self) -> subprocess.Popen[str]:
-        cleanup_stale_tpu_locks(allow_kill=True)
         ensure_persistent_cache_env()
+        cleanup_stale_tpu_locks(allow_kill=True)
         stdout_target: int | IO[str] = subprocess.PIPE
         if self.log_path is not None:
             self.log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -436,11 +523,21 @@ def snapshot_xla_compilation_metrics() -> dict[str, int]:
     except Exception:
         pass
 
-    # Query torch_tpu / torch_xla metric report if exposed
+    # Query torch_tpu / torch_xla metric report or TpuBackend._num_compiled_executables
     try:
         import torch
 
-        if hasattr(torch, "tpu"):
+        try:
+            from torch._dynamo.backends.registry import lookup_backend
+
+            tpu_backend = lookup_backend("tpu")
+            num_exec = getattr(tpu_backend, "_num_compiled_executables", None)
+            if isinstance(num_exec, int):
+                metrics["tpu_backend_compiles"] = num_exec
+        except Exception:
+            pass
+
+        if metrics["tpu_backend_compiles"] == 0 and hasattr(torch, "tpu"):
             for attr in ("metrics_report", "get_compilation_count", "_compilation_count"):
                 fn = getattr(torch.tpu, attr, None)
                 if callable(fn):
@@ -455,7 +552,13 @@ def snapshot_xla_compilation_metrics() -> dict[str, int]:
         pass
 
     # Count persistent cache entries on disk
-    for env_key in ("XLA_CACHE_DIR", "JAX_COMPILATION_CACHE_DIR", "VLLM_XLA_CACHE_PATH"):
+    for env_key in (
+        "XLA_CACHE_DIR",
+        "JAX_COMPILATION_CACHE_DIR",
+        "VLLM_XLA_CACHE_PATH",
+        "VLLM_CACHE_ROOT",
+        "TORCH_TPU_TIER3_COMPILATION_CACHE_ROOT",
+    ):
         p = os.environ.get(env_key)
         if p and os.path.isdir(p):
             for _root, _dirs, files in os.walk(p):

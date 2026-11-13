@@ -1,0 +1,1311 @@
+{
+  "timestamp_utc": "2026-11-10T05:06:42.005854+00:00",
+  "python_version": "3.12.15",
+  "persistent_cache_env": {
+    "FP8_BLOCKDIFF_CACHE_BASE": "/tmp/tpu_logs/fp8blockdiff_cache",
+    "VLLM_XLA_CACHE_PATH": "/tmp/tpu_logs/fp8blockdiff_cache/vllm_xla_cache",
+    "VLLM_CACHE_ROOT": "/tmp/tpu_logs/fp8blockdiff_cache/vllm_cache",
+    "TORCH_TPU_TIER3_COMPILATION_CACHE_ROOT": "/tmp/tpu_logs/fp8blockdiff_cache/tier3_pjrt_cache",
+    "XLA_CACHE_DIR": "/tmp/tpu_logs/fp8blockdiff_cache/xla_cache",
+    "JAX_COMPILATION_CACHE_DIR": "/tmp/tpu_logs/fp8blockdiff_cache/jax_cache",
+    "JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS": "0",
+    "TORCHINDUCTOR_CACHE_DIR": "/tmp/tpu_logs/fp8blockdiff_cache/torchinductor_cache",
+    "HF_HOME": "/tmp/tpu_logs/fp8blockdiff_cache/hf_cache",
+    "HF_HUB_DISABLE_XET": "1",
+    "PJRT_DEVICE": "TPU",
+    "FP8_BLOCKDIFF_TP_SIZE": "1",
+    "FP8_BLOCKDIFF_CHIP_ID": "1",
+    "TPU_VISIBLE_CHIPS": "1",
+    "TPU_VISIBLE_DEVICES": "1",
+    "ALLOW_MULTIPLE_LIBTPU_LOAD": "true",
+    "TPU_CHIPS_PER_HOST_BOUNDS": "1,1,1",
+    "CHIPS_PER_HOST_BOUNDS": "1,1,1",
+    "TPU_HOST_BOUNDS": "1,1,1",
+    "TPU_PROCESS_PORT": "8476",
+    "TPU_PROCESS_ADDRESSES": "localhost:8476",
+    "TPU_RUNTIME_METRICS_PORTS": "8441,8442",
+    "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt",
+    "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
+    "CURL_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt"
+  },
+  "topology": {
+    "chip_count": 4,
+    "device_kind": "TPU v7 (tpu7x-16)",
+    "hbm_bytes_per_chip": 206158430208,
+    "vfio_devices": [
+      "/dev/vfio/0",
+      "/dev/vfio/1",
+      "/dev/vfio/2",
+      "/dev/vfio/3",
+      "/dev/vfio/4",
+      "/dev/vfio/5",
+      "/dev/vfio/6",
+      "/dev/vfio/7"
+    ],
+    "backend_provider": "torch_tpu",
+    "hostname": "rkaranjai-nanodit-dev",
+    "python_version": "3.12.15",
+    "hbm_gb_per_chip": 192.0,
+    "total_hbm_gb": 768.0,
+    "is_ironwood_v7": true
+  },
+  "tpu_info_cli": "Libtpu version: 0.0.50                                                          \nAccelerator type: 7x                                                            \n                                                                                \nTPU Chips                                    \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Chip        \u2503 Type       \u2503 Devices \u2503 PID  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 /dev/vfio/1 \u2502 TPU7x chip \u2502 2       \u2502 None \u2502\n\u2502 /dev/vfio/4 \u2502 TPU7x chip \u2502 2       \u2502 None \u2502\n\u2502 /dev/vfio/5 \u2502 TPU7x chip \u2502 2       \u2502 None \u2502\n\u2502 /dev/vfio/6 \u2502 TPU7x chip \u2502 2       \u2502 None \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 Runtime Utilization Status \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 WARNING: Libtpu metrics unavailable. Is there a framework using the TPU? See \u2502\n\u2502 tpu_info docs for more information.                                          \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\nTPU Runtime Utilization                \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Chip \u2503 HBM Usage (GiB) \u2503 Duty cycle \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 0    \u2502 N/A             \u2502 N/A        \u2502\n\u2502 1    \u2502 N/A             \u2502 N/A        \u2502\n\u2502 2    \u2502 N/A             \u2502 N/A        \u2502\n\u2502 3    \u2502 N/A             \u2502 N/A        \u2502\n\u2502 4    \u2502 N/A             \u2502 N/A        \u2502\n\u2502 5    \u2502 N/A             \u2502 N/A        \u2502\n\u2502 6    \u2502 N/A             \u2502 N/A        \u2502\n\u2502 7    \u2502 N/A             \u2502 N/A        \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nTensorCore Utilization              \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Core ID \u2503 TensorCore Utilization \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 0       \u2502 0.00%                  \u2502\n\u2502 1       \u2502 0.00%                  \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 Buffer Transfer Latency Status \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 WARNING: Buffer Transfer Latency metrics unavailable. Did you start a        \u2502\n\u2502 MULTI_SLICE workload with `TPU_RUNTIME_METRICS_PORTS=8431,8432,8433,8434`?   \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 gRPC TCP Minimum RTT Status \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 WARNING: gRPC TCP Minimum RTT metrics unavailable. Did you start a           \u2502\n\u2502 MULTI_SLICE workload with `TPU_RUNTIME_METRICS_PORTS=8431,8432,8433,8434`?   \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 gRPC TCP Delivery Rate Status \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 WARNING: gRPC TCP Delivery Rate metrics unavailable. Did you start a         \u2502\n\u2502 MULTI_SLICE workload with `TPU_RUNTIME_METRICS_PORTS=8431,8432,8433,8434`?   \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f",
+  "packages": {
+    "torch": "2.13.0+cpu",
+    "torch_tpu": "0.2.0",
+    "vllm": "0.31.0+empty",
+    "vllm_torchtpu": "0.0.0",
+    "jax": "0.11.2",
+    "pallas": "0.11.2",
+    "tokamax": "0.0.17",
+    "tpu_info": "0.7.1",
+    "xprof": "2.24.2",
+    "datasets": "5.2.0",
+    "seaborn": "0.13.2"
+  },
+  "matmul_verification": {
+    "matrix_shape_mkn": [
+      1024,
+      2048,
+      2048
+    ],
+    "bf16_eager_cosine_sim": 0.999977,
+    "bf16_compiled_cosine_sim": 0.999977,
+    "bf16_compiled_latency_ms": 0.0938,
+    "bf16_compiled_tflops": 91.56,
+    "fp8_dispatch_op": "torch._scaled_mm",
+    "fp8_compiled_cosine_sim": 0.999272,
+    "fp8_compiled_latency_ms": 0.0909,
+    "fp8_compiled_tflops": 94.53
+  },
+  "api_introspection": {
+    "pallas_jax_op": {
+      "module_path": "<builtin>",
+      "public_attributes": [
+        "get_pallas_mesh",
+        "jax_op"
+      ],
+      "callable_signatures": {
+        "get_pallas_mesh": "(axis_names: collections.abc.Sequence[str] | str, mesh_shape: collections.abc.Sequence[int] | None = None, process_group: torch.distributed.distributed_c10d.ProcessGroup | None = None) -> jax._src.mesh.Mesh",
+        "jax_op": "(name, fn=None, /, *, donate_argnums=None, mesh: jax._src.mesh.Mesh | None = None, input_partition_specs=None, output_partition_specs=None)"
+      }
+    },
+    "tpu_profiler": {
+      "module_path": "<builtin>",
+      "public_attributes": [
+        "TpuProfilerConfig"
+      ],
+      "callable_signatures": {
+        "TpuProfilerConfig": "(*, host_tracer_level: 'int' = 2, device_tracer_level: 'int' = 1, python_tracer_level: 'int' = 0, run_dir: 'os.PathLike[str] | str | None' = None, worker_rank: 'str | None' = None, experimental_options: 'Mapping[str, _ExperimentalValue] | None' = None, check_experimental_options: 'bool' = True)"
+      }
+    },
+    "tokamax": {
+      "module_path": "/usr/local/lib/python3.12/site-packages/tokamax",
+      "public_attributes": [
+        "AutotuningResult",
+        "BatchedShapeDtype",
+        "BenchmarkData",
+        "BoundArguments",
+        "DISABLE_JAX_EXPORT_CHECKS",
+        "DotProductAttentionImplementation",
+        "Op",
+        "RaggedDotGroupSizes",
+        "autotune",
+        "autotuning",
+        "benchmark",
+        "benchmarking",
+        "config",
+        "dot_product_attention",
+        "gated_linear_unit",
+        "generate_ragged_dot_group_sizes",
+        "layer_norm",
+        "linear_softmax_cross_entropy_loss",
+        "ops",
+        "ragged_dot",
+        "ragged_dot_general",
+        "snake_case_name",
+        "standardize_function",
+        "triangle_multiplication"
+      ],
+      "sample_files": [
+        "tokamax/__init__.py",
+        "tokamax/_src/__init__.py",
+        "tokamax/_src/ad.py",
+        "tokamax/_src/ad_test.py",
+        "tokamax/_src/autotuning/__init__.py",
+        "tokamax/_src/autotuning/api.py",
+        "tokamax/_src/autotuning/api_test.py",
+        "tokamax/_src/autotuning/arg_spec.py",
+        "tokamax/_src/autotuning/autotuner.py",
+        "tokamax/_src/autotuning/cache.py",
+        "tokamax/_src/autotuning/cache_test.py",
+        "tokamax/_src/batching.py",
+        "tokamax/_src/batching_test.py",
+        "tokamax/_src/benchmarking.py",
+        "tokamax/_src/benchmarking_test.py",
+        "tokamax/_src/config.py",
+        "tokamax/_src/config_test.py",
+        "tokamax/_src/gpu_utils.py",
+        "tokamax/_src/gpu_utils_test.py",
+        "tokamax/_src/hlo_utils.py",
+        "tokamax/_src/hlo_utils_common.py",
+        "tokamax/_src/hlo_utils_common_test.py",
+        "tokamax/_src/hlo_utils_test.py",
+        "tokamax/_src/jaxtyping.py",
+        "tokamax/_src/jaxtyping_test.py",
+        "tokamax/_src/mosaic_gpu.py",
+        "tokamax/_src/mosaic_gpu_test.py",
+        "tokamax/_src/mosaic_tpu.py",
+        "tokamax/_src/numerics.py",
+        "tokamax/_src/numerics_test.py",
+        "tokamax/_src/ops/__init__.py",
+        "tokamax/_src/ops/attention/__init__.py",
+        "tokamax/_src/ops/attention/api.py",
+        "tokamax/_src/ops/attention/api_sharding_test.py",
+        "tokamax/_src/ops/attention/api_test.py",
+        "tokamax/_src/ops/attention/arg_specs.py",
+        "tokamax/_src/ops/attention/base.py",
+        "tokamax/_src/ops/attention/base_test.py",
+        "tokamax/_src/ops/attention/bench.py",
+        "tokamax/_src/ops/attention/jax_nn.py",
+        "tokamax/_src/ops/attention/jax_nn_test.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu_common.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu_kernel_sm100.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu_kernel_sm80.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu_kernel_sm90.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu_test.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu_vjp.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu_vjp_common.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu_vjp_kernel_sm100.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_gpu_vjp_kernel_sm90.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_tpu.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_tpu_common.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_tpu_test.py",
+        "tokamax/_src/ops/attention/pallas_mosaic_tpu_vjp.py",
+        "tokamax/_src/ops/attention/pallas_triton.py",
+        "tokamax/_src/ops/attention/pallas_triton_test.py",
+        "tokamax/_src/ops/attention/pallas_triton_vjp.py",
+        "tokamax/_src/ops/attention/test_base.py",
+        "tokamax/_src/ops/attention/triton.py",
+        "tokamax/_src/ops/attention/triton_test.py",
+        "tokamax/_src/ops/attention/triton_vjp.py",
+        "tokamax/_src/ops/attention/xla_chunked.py",
+        "tokamax/_src/ops/attention/xla_chunked_test.py",
+        "tokamax/_src/ops/batched_rpa/__init__.py",
+        "tokamax/_src/ops/batched_rpa/api.py",
+        "tokamax/_src/ops/batched_rpa/arg_specs.py",
+        "tokamax/_src/ops/batched_rpa/base.py",
+        "tokamax/_src/ops/batched_rpa/base_test.py",
+        "tokamax/_src/ops/batched_rpa/kernel/__init__.py",
+        "tokamax/_src/ops/batched_rpa/kernel/bref_override.py",
+        "tokamax/_src/ops/batched_rpa/kernel/configs.py",
+        "tokamax/_src/ops/batched_rpa/kernel/configs_test.py",
+        "tokamax/_src/ops/batched_rpa/kernel/correctness_test_per_token_quantization.py",
+        "tokamax/_src/ops/batched_rpa/kernel/flash_attention.py",
+        "tokamax/_src/ops/batched_rpa/kernel/kernel.py",
+        "tokamax/_src/ops/batched_rpa/kernel/schedule.py",
+        "tokamax/_src/ops/batched_rpa/kernel/schedule_cp.py",
+        "tokamax/_src/ops/batched_rpa/kernel/seq_along_lane_parity_test.py",
+        "tokamax/_src/ops/batched_rpa/kernel/speculative_decode_test.py"
+      ]
+    },
+    "vllm_speculative": {
+      "speculative_config_fields": [
+        "enforce_eager",
+        "num_speculative_tokens",
+        "model",
+        "method",
+        "draft_tensor_parallel_size",
+        "tensor_parallel_size",
+        "quantization",
+        "moe_backend",
+        "attention_backend",
+        "kv_cache_dtype",
+        "max_model_len",
+        "revision",
+        "code_revision",
+        "index_share_for_mtp_iteration",
+        "disable_padded_drafter_batch",
+        "disable_eagle_block_drop",
+        "use_local_argmax_reduction",
+        "use_heterogeneous_vocab",
+        "prompt_lookup_max",
+        "prompt_lookup_min",
+        "parallel_drafting",
+        "target_model_config",
+        "target_parallel_config",
+        "num_speculative_tokens_per_batch_size",
+        "draft_model_config",
+        "draft_parallel_config",
+        "suffix_decoding_max_tree_depth",
+        "suffix_decoding_max_cached_requests",
+        "suffix_decoding_max_spec_factor",
+        "suffix_decoding_min_token_prob",
+        "draft_load_config",
+        "rejection_sample_method",
+        "synthetic_acceptance_rates",
+        "synthetic_acceptance_length",
+        "enable_adaptive_verification",
+        "draft_sample_method",
+        "dspark_draft_topk"
+      ],
+      "speculative_config_doc": "Configuration for speculative decoding.",
+      "discovered_source_files": [
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/__init__.py",
+          "relative_path": "vllm_torchtpu/__init__.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/compilation/tpu_compiler.py",
+          "relative_path": "vllm_torchtpu/compilation/tpu_compiler.py",
+          "matched_keywords": [
+            "eagle",
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/core/eagle_block_drop.py",
+          "relative_path": "vllm_torchtpu/core/eagle_block_drop.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/distributed/pp_shift.py",
+          "relative_path": "vllm_torchtpu/distributed/pp_shift.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/distributed/sharded_jax_op.py",
+          "relative_path": "vllm_torchtpu/distributed/sharded_jax_op.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/kernels/deepseek_v4/core_attention/mla_swa.py",
+          "relative_path": "vllm_torchtpu/kernels/deepseek_v4/core_attention/mla_swa.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/kernels/experimental/adaptive_fused_moe/vllm_adapter.py",
+          "relative_path": "vllm_torchtpu/kernels/experimental/adaptive_fused_moe/vllm_adapter.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/kernels/experimental/pcp_streaming_rpa/vllm_adapter.py",
+          "relative_path": "vllm_torchtpu/kernels/experimental/pcp_streaming_rpa/vllm_adapter.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/kernels/partial_kv_update.py",
+          "relative_path": "vllm_torchtpu/kernels/partial_kv_update.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/kernels/router_topk.py",
+          "relative_path": "vllm_torchtpu/kernels/router_topk.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/attention.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/attention.py",
+          "matched_keywords": [
+            "dflash",
+            "eagle3",
+            "eagle",
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/cp_attention.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/cp_attention.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/custom_ops/deepseek_v4/deepseek_v4_attention_op.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/custom_ops/deepseek_v4/deepseek_v4_attention_op.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/custom_ops/deepseek_v4/deepseek_v4_compressor.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/custom_ops/deepseek_v4/deepseek_v4_compressor.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/custom_ops/deepseek_v4/deepseek_v4_indexer.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/custom_ops/deepseek_v4/deepseek_v4_indexer.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/custom_ops/deepseek_v4/deepseek_v4_mhc_op.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/custom_ops/deepseek_v4/deepseek_v4_mhc_op.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/custom_ops/gdn_attention_op.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/custom_ops/gdn_attention_op.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/custom_ops/kda_attention_op.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/custom_ops/kda_attention_op.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/custom_ops/mamba_state_copy_op.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/custom_ops/mamba_state_copy_op.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/custom_ops/mla_attention_op.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/custom_ops/mla_attention_op.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/custom_ops/optimization_barrier_op.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/custom_ops/optimization_barrier_op.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/fused_moe.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/fused_moe.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/fused_moe_decode.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/fused_moe_decode.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/fused_moe_ep.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/fused_moe_ep.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/linear_common.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/linear_common.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/moe_tp_decode.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/moe_tp_decode.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/quantization/fp8.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/quantization/fp8.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/router_topk.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/router_topk.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/layers/adapter/vision_attention.py",
+          "relative_path": "vllm_torchtpu/layers/adapter/vision_attention.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/models/vllm/__init__.py",
+          "relative_path": "vllm_torchtpu/models/vllm/__init__.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/models/vllm/deepseek_v4/attention.py",
+          "relative_path": "vllm_torchtpu/models/vllm/deepseek_v4/attention.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/models/vllm/deepseek_v4/dspark.py",
+          "relative_path": "vllm_torchtpu/models/vllm/deepseek_v4/dspark.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/models/vllm/kimi_k3/__init__.py",
+          "relative_path": "vllm_torchtpu/models/vllm/kimi_k3/__init__.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/models/vllm/kimi_k3/collective_ops.py",
+          "relative_path": "vllm_torchtpu/models/vllm/kimi_k3/collective_ops.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/models/vllm/kimi_k3/dspark.py",
+          "relative_path": "vllm_torchtpu/models/vllm/kimi_k3/dspark.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/models/vllm/kimi_k3/layers.py",
+          "relative_path": "vllm_torchtpu/models/vllm/kimi_k3/layers.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/models/vllm/vllm_model_wrapper_context.py",
+          "relative_path": "vllm_torchtpu/models/vllm/vllm_model_wrapper_context.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/offload/block_major_layout.py",
+          "relative_path": "vllm_torchtpu/offload/block_major_layout.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/omni/attention.py",
+          "relative_path": "vllm_torchtpu/omni/attention.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/omni/rope.py",
+          "relative_path": "vllm_torchtpu/omni/rope.py",
+          "matched_keywords": [
+            "jax_op"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/patch_registry.py",
+          "relative_path": "vllm_torchtpu/patch_registry.py",
+          "matched_keywords": [
+            "dflash",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/runner/speculative_decoding_manager.py",
+          "relative_path": "vllm_torchtpu/runner/speculative_decoding_manager.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle",
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/runner/tpu_runner.py",
+          "relative_path": "vllm_torchtpu/runner/tpu_runner.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle",
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/spec_decode/dflash.py",
+          "relative_path": "vllm_torchtpu/spec_decode/dflash.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/spec_decode/dspark.py",
+          "relative_path": "vllm_torchtpu/spec_decode/dspark.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/spec_decode/eagle3.py",
+          "relative_path": "vllm_torchtpu/spec_decode/eagle3.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/spec_decode/mtp_fused_loop.py",
+          "relative_path": "vllm_torchtpu/spec_decode/mtp_fused_loop.py",
+          "matched_keywords": [
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/spec_decode/mtp_loop_model.py",
+          "relative_path": "vllm_torchtpu/spec_decode/mtp_loop_model.py",
+          "matched_keywords": [
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm_torchtpu",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm_torchtpu/spec_decode/utils.py",
+          "relative_path": "vllm_torchtpu/spec_decode/utils.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/config/engram.py",
+          "relative_path": "vllm/config/engram.py",
+          "matched_keywords": [
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/config/kernel.py",
+          "relative_path": "vllm/config/kernel.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/config/speculative.py",
+          "relative_path": "vllm/config/speculative.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle",
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/config/vllm.py",
+          "relative_path": "vllm/config/vllm.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle",
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/envs.py",
+          "relative_path": "vllm/envs.py",
+          "matched_keywords": [
+            "dflash"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/layers/attention/mla_attention.py",
+          "relative_path": "vllm/model_executor/layers/attention/mla_attention.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/cohere_eagle.py",
+          "relative_path": "vllm/model_executor/models/cohere_eagle.py",
+          "matched_keywords": [
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/deepseek_eagle.py",
+          "relative_path": "vllm/model_executor/models/deepseek_eagle.py",
+          "matched_keywords": [
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/deepseek_eagle3.py",
+          "relative_path": "vllm/model_executor/models/deepseek_eagle3.py",
+          "matched_keywords": [
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/eagle2_5_vl.py",
+          "relative_path": "vllm/model_executor/models/eagle2_5_vl.py",
+          "matched_keywords": [
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/gemma4_dspark.py",
+          "relative_path": "vllm/model_executor/models/gemma4_dspark.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/laguna_dflash.py",
+          "relative_path": "vllm/model_executor/models/laguna_dflash.py",
+          "matched_keywords": [
+            "dflash",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/lilicorr.py",
+          "relative_path": "vllm/model_executor/models/lilicorr.py",
+          "matched_keywords": [
+            "dflash"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/llama4_eagle.py",
+          "relative_path": "vllm/model_executor/models/llama4_eagle.py",
+          "matched_keywords": [
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/llama_eagle.py",
+          "relative_path": "vllm/model_executor/models/llama_eagle.py",
+          "matched_keywords": [
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/llama_eagle3.py",
+          "relative_path": "vllm/model_executor/models/llama_eagle3.py",
+          "matched_keywords": [
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/longcat_flash_ngram.py",
+          "relative_path": "vllm/model_executor/models/longcat_flash_ngram.py",
+          "matched_keywords": [
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/minicpm_eagle.py",
+          "relative_path": "vllm/model_executor/models/minicpm_eagle.py",
+          "matched_keywords": [
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/mistral_eagle.py",
+          "relative_path": "vllm/model_executor/models/mistral_eagle.py",
+          "matched_keywords": [
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/mistral_large_3_eagle.py",
+          "relative_path": "vllm/model_executor/models/mistral_large_3_eagle.py",
+          "matched_keywords": [
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_dflash.py",
+          "relative_path": "vllm/model_executor/models/qwen3_dflash.py",
+          "matched_keywords": [
+            "dflash",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_dflash2.py",
+          "relative_path": "vllm/model_executor/models/qwen3_dflash2.py",
+          "matched_keywords": [
+            "dflash"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_dspark.py",
+          "relative_path": "vllm/model_executor/models/qwen3_dspark.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_eagle3.py",
+          "relative_path": "vllm/model_executor/models/qwen3_eagle3.py",
+          "matched_keywords": [
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/registry.py",
+          "relative_path": "vllm/model_executor/models/registry.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle",
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/model_executor/models/utils.py",
+          "relative_path": "vllm/model_executor/models/utils.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/__init__.py",
+          "relative_path": "vllm/models/deepseek_v4/__init__.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/amd/dspark.py",
+          "relative_path": "vllm/models/deepseek_v4/amd/dspark.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/amd/model.py",
+          "relative_path": "vllm/models/deepseek_v4/amd/model.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/amd/rocm.py",
+          "relative_path": "vllm/models/deepseek_v4/amd/rocm.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/attention.py",
+          "relative_path": "vllm/models/deepseek_v4/attention.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/common/ops/cache_utils.py",
+          "relative_path": "vllm/models/deepseek_v4/common/ops/cache_utils.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/common/vl_model.py",
+          "relative_path": "vllm/models/deepseek_v4/common/vl_model.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/cpu/dspark.py",
+          "relative_path": "vllm/models/deepseek_v4/cpu/dspark.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/cpu/model.py",
+          "relative_path": "vllm/models/deepseek_v4/cpu/model.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/nvidia/dspark.py",
+          "relative_path": "vllm/models/deepseek_v4/nvidia/dspark.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/nvidia/flashinfer_sparse.py",
+          "relative_path": "vllm/models/deepseek_v4/nvidia/flashinfer_sparse.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v4/xpu/dspark.py",
+          "relative_path": "vllm/models/deepseek_v4/xpu/dspark.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/__init__.py",
+          "relative_path": "vllm/models/deepseek_v41/__init__.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/amd/dspark.py",
+          "relative_path": "vllm/models/deepseek_v41/amd/dspark.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/amd/model.py",
+          "relative_path": "vllm/models/deepseek_v41/amd/model.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle3",
+            "eagle",
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/amd/rocm.py",
+          "relative_path": "vllm/models/deepseek_v41/amd/rocm.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/amd/vl_model.py",
+          "relative_path": "vllm/models/deepseek_v41/amd/vl_model.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/attention.py",
+          "relative_path": "vllm/models/deepseek_v41/attention.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/common/engram.py",
+          "relative_path": "vllm/models/deepseek_v41/common/engram.py",
+          "matched_keywords": [
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/nvidia/dspark.py",
+          "relative_path": "vllm/models/deepseek_v41/nvidia/dspark.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/nvidia/engram.py",
+          "relative_path": "vllm/models/deepseek_v41/nvidia/engram.py",
+          "matched_keywords": [
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/nvidia/flashinfer_sparse.py",
+          "relative_path": "vllm/models/deepseek_v41/nvidia/flashinfer_sparse.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/nvidia/model.py",
+          "relative_path": "vllm/models/deepseek_v41/nvidia/model.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle3",
+            "eagle",
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/deepseek_v41/nvidia/vl_model.py",
+          "relative_path": "vllm/models/deepseek_v41/nvidia/vl_model.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/kimi_k3/nvidia/dspark_mla.py",
+          "relative_path": "vllm/models/kimi_k3/nvidia/dspark_mla.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/kimi_k3/nvidia/mla.py",
+          "relative_path": "vllm/models/kimi_k3/nvidia/mla.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/qwen4_exp/common/ngram_embedding.py",
+          "relative_path": "vllm/models/qwen4_exp/common/ngram_embedding.py",
+          "matched_keywords": [
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ngram_embedding.py",
+          "relative_path": "vllm/models/qwen4_exp/nvidia/ngram_embedding.py",
+          "matched_keywords": [
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/platforms/cpu.py",
+          "relative_path": "vllm/platforms/cpu.py",
+          "matched_keywords": [
+            "dflash",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/platforms/cuda.py",
+          "relative_path": "vllm/platforms/cuda.py",
+          "matched_keywords": [
+            "dflash"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/transformers_utils/config.py",
+          "relative_path": "vllm/transformers_utils/config.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/transformers_utils/configs/__init__.py",
+          "relative_path": "vllm/transformers_utils/configs/__init__.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/transformers_utils/configs/eagle.py",
+          "relative_path": "vllm/transformers_utils/configs/eagle.py",
+          "matched_keywords": [
+            "dflash",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/transformers_utils/configs/k3_dspark.py",
+          "relative_path": "vllm/transformers_utils/configs/k3_dspark.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/transformers_utils/configs/muse_glimmer.py",
+          "relative_path": "vllm/transformers_utils/configs/muse_glimmer.py",
+          "matched_keywords": [
+            "dflash"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/transformers_utils/configs/speculators/algos.py",
+          "relative_path": "vllm/transformers_utils/configs/speculators/algos.py",
+          "matched_keywords": [
+            "dflash",
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/transformers_utils/configs/speculators/base.py",
+          "relative_path": "vllm/transformers_utils/configs/speculators/base.py",
+          "matched_keywords": [
+            "dflash",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/transformers_utils/model_arch_config_convertor.py",
+          "relative_path": "vllm/transformers_utils/model_arch_config_convertor.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle",
+            "ngram"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/utils/cpu_triton_utils.py",
+          "relative_path": "vllm/utils/cpu_triton_utils.py",
+          "matched_keywords": [
+            "dflash",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/v1/attention/backends/flashinfer.py",
+          "relative_path": "vllm/v1/attention/backends/flashinfer.py",
+          "matched_keywords": [
+            "dflash"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/v1/attention/backends/mla/compressor_utils.py",
+          "relative_path": "vllm/v1/attention/backends/mla/compressor_utils.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/v1/attention/backends/mla/flashinfer_mla.py",
+          "relative_path": "vllm/v1/attention/backends/mla/flashinfer_mla.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/v1/attention/backends/mla/indexer.py",
+          "relative_path": "vllm/v1/attention/backends/mla/indexer.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/v1/attention/backends/mla/rocm_aiter_mla.py",
+          "relative_path": "vllm/v1/attention/backends/mla/rocm_aiter_mla.py",
+          "matched_keywords": [
+            "dspark",
+            "eagle3",
+            "eagle"
+          ]
+        },
+        {
+          "package": "vllm",
+          "file": "/usr/local/lib/python3.12/site-packages/vllm/v1/attention/backends/mla/sparse_swa.py",
+          "relative_path": "vllm/v1/attention/backends/mla/sparse_swa.py",
+          "matched_keywords": [
+            "dspark"
+          ]
+        }
+      ]
+    },
+    "vllm_cli_speculative_help": "                     [--quantization QUANTIZATION]\n                     [--quantization-config QUANTIZATION_CONFIG]\n                     [--allow-deprecated-quantization | --no-allow-deprecated-quantization]\n                     [--kv-cache-dtype {auto,bfloat16,float16,fp8,fp8_ds_mla,fp8_e4m3,fp8_e5m2,fp8_inc,fp8_per_token_head,int4_per_token_head,int8_per_token_head,nvfp4,nvfp4_4over6,nvfp4_ds_mla,turboquant_3bit_nc,turboquant_4bit_nc,turboquant_k3v4_nc,turboquant_k8v4}]\n                     [--kv-cache-dtype-skip-layers KV_CACHE_DTYPE_SKIP_LAYERS [KV_CACHE_DTYPE_SKIP_LAYERS ...]]\n                     [--async-scheduling | --no-async-scheduling]\n                     [--speculative-config SPECULATIVE_CONFIG]"
+  }
+}
